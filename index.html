@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <!-- ===== Meta tags (your “business card”) ===== -->
+  <!-- ===== Meta tags (your "business card") ===== -->
   <meta name="description" content="Jailbreak-AudioBench">
   <meta property="og:title" content="Jailbreak-AudioBench"/>
   <meta property="og:description"
@@ -94,7 +94,7 @@
 <div class="is-size-5 publication-authors has-text-centered" style="margin-bottom: 2rem;">
   <span class="author-block"><sup style="color:#ed4b82;">1</sup>Hong Kong University of Science and Technology (Guangzhou),</span>
   <span class="author-block"><sup style="color:#6fbf73;">2</sup>University of Oxford,</span>
-  <span class="author-block"><sup style="color:#f39c12;">3</sup>Xi’an Jiaotong University,</span>
+  <span class="author-block"><sup style="color:#f39c12;">3</sup>Xi'an Jiaotong University,</span>
   <span class="author-block"><sup style="color:#3498db;">4</sup>Northeastern University,</span>
   <span class="author-block"><sup style="color:#9b59b6;">5</sup>Beijing University of Technology</span>
 </div>
@@ -159,7 +159,7 @@
   </div>
 </section>
 
-<!-- ============ AUTHOR INFO “CIRCLE” (保持原图) ============ -->
+<!-- ============ AUTHOR INFO "CIRCLE" (保持原图) ============ -->
 <section class="hero is-light is-small">
   <div class="hero-body has-text-centered">
     <h1 class="title is-1 mmmu">
@@ -235,7 +235,7 @@
           </tbody>
         </table>
         <h2 class="subtitle has-text-centered" style="font-size:smaller;">
-          “Editing Families” = 4 Tone × 3 Intonation × 2 Speed × 3 Emphasis × 3 Noise × 3 Accent × 2 Emotion
+          "Editing Families" = 4 Tone × 3 Intonation × 2 Speed × 3 Emphasis × 3 Noise × 3 Accent × 2 Emotion
         </h2>
       </div>
     </div>
@@ -267,6 +267,162 @@
               as cascading or end-to-end systems are prone to dual-channel exploits.
             </li>
           </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 交互式音频处理演示 ============ -->
+<section class="section hero is-light">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">🎧 交互式音频处理演示</h2>
+        <div class="content has-text-justified">
+          <p>
+            体验不同音频处理参数对语音的影响。选择参数组合后点击"应用"按钮查看效果。
+          </p>
+        </div>
+        
+        <div class="box">
+          <div class="columns is-multiline">
+            <!-- 强调 -->
+            <div class="column is-half">
+              <div class="field">
+                <label class="label">强调 (Emphasis)</label>
+                <div class="control">
+                  <div class="select is-fullwidth">
+                    <select id="emphasis">
+                      <option value="none">无</option>
+                      <option value="volume_x_2">音量 x 2</option>
+                      <option value="volume_x_5">音量 x 5</option>
+                      <option value="volume_x_10">音量 x 10</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- 速度 -->
+            <div class="column is-half">
+              <div class="field">
+                <label class="label">速度 (Speed)</label>
+                <div class="control">
+                  <div class="select is-fullwidth">
+                    <select id="speed">
+                      <option value="normal">正常</option>
+                      <option value="rate_x_0.5">速率 x 0.5</option>
+                      <option value="rate_x_1.5">速率 x 1.5</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- 语调 -->
+            <div class="column is-half">
+              <div class="field">
+                <label class="label">语调 (Intonation)</label>
+                <div class="control">
+                  <div class="select is-fullwidth">
+                    <select id="intonation">
+                      <option value="normal">正常</option>
+                      <option value="interval+2">间隔 +2</option>
+                      <option value="interval+3">间隔 +3</option>
+                      <option value="interval+4">间隔 +4</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- 音调 -->
+            <div class="column is-half">
+              <div class="field">
+                <label class="label">音调 (Tone)</label>
+                <div class="control">
+                  <div class="select is-fullwidth">
+                    <select id="tone">
+                      <option value="normal">正常</option>
+                      <option value="semitone-8">半音 -8</option>
+                      <option value="semitone+4">半音 +4</option>
+                      <option value="semitone+8">半音 +8</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- 背景噪音 -->
+            <div class="column is-half">
+              <div class="field">
+                <label class="label">背景噪音 (Background Noise)</label>
+                <div class="control">
+                  <div class="select is-fullwidth">
+                    <select id="background">
+                      <option value="none">无</option>
+                      <option value="crowd">人群噪音</option>
+                      <option value="machine">机器噪音</option>
+                      <option value="white">白噪音</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- 名人口音 -->
+            <div class="column is-half">
+              <div class="field">
+                <label class="label">名人口音 (Celebrity Accent)</label>
+                <div class="control">
+                  <div class="select is-fullwidth">
+                    <select id="accent">
+                      <option value="none">无</option>
+                      <option value="trump" selected>特朗普</option>
+                      <option value="kanye">坎耶·韦斯特</option>
+                      <option value="lucy">刘玉玲</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- 情感 -->
+            <div class="column is-half">
+              <div class="field">
+                <label class="label">情感 (Emotion)</label>
+                <div class="control">
+                  <div class="select is-fullwidth">
+                    <select id="emotion">
+                      <option value="neutral">中性</option>
+                      <option value="laugh">笑声</option>
+                      <option value="scream">尖叫</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- 应用按钮 -->
+            <div class="column is-half">
+              <button id="apply-button" class="button is-primary is-fullwidth">应用参数</button>
+            </div>
+          </div>
+          
+          <!-- 音频播放器 -->
+          <div class="mt-4">
+            <h4 class="subtitle is-5">音频示例</h4>
+            <div id="audio-player-container" class="has-text-centered">
+              <audio id="audio-player" controls>
+                <source src="static/audio/Trump.mp3" type="audio/mpeg">
+                您的浏览器不支持音频元素。
+              </audio>
+            </div>
+            <div id="audio-description" class="mt-2">
+              <p class="is-size-6">当前音频: 特朗普口音 (默认样本)</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -361,6 +517,73 @@
     </div>
   </div>
 </footer>
+
+<!-- 添加JavaScript代码在页面底部 -->
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const applyButton = document.getElementById('apply-button');
+    const audioPlayer = document.getElementById('audio-player');
+    const audioDescription = document.getElementById('audio-description');
+    
+    applyButton.addEventListener('click', function() {
+      // 获取所有选项值
+      const emphasis = document.getElementById('emphasis').value;
+      const speed = document.getElementById('speed').value;
+      const intonation = document.getElementById('intonation').value;
+      const tone = document.getElementById('tone').value;
+      const background = document.getElementById('background').value;
+      const accent = document.getElementById('accent').value;
+      const emotion = document.getElementById('emotion').value;
+      
+      // 我们实际上始终使用同一个音频文件，但可以更新描述以反映所选参数
+      // 在实际应用中，这里可以根据参数组合加载不同的音频文件
+      
+      // 重置音频以重新播放
+      audioPlayer.pause();
+      audioPlayer.currentTime = 0;
+      
+      // 构建描述
+      let description = "当前音频:";
+      
+      if (emphasis !== "none") {
+        description += " " + document.querySelector(`#emphasis option[value="${emphasis}"]`).text;
+      }
+      
+      if (speed !== "normal") {
+        description += " " + document.querySelector(`#speed option[value="${speed}"]`).text;
+      }
+      
+      if (intonation !== "normal") {
+        description += " " + document.querySelector(`#intonation option[value="${intonation}"]`).text;
+      }
+      
+      if (tone !== "normal") {
+        description += " " + document.querySelector(`#tone option[value="${tone}"]`).text;
+      }
+      
+      if (background !== "none") {
+        description += " " + document.querySelector(`#background option[value="${background}"]`).text;
+      }
+      
+      if (accent !== "none") {
+        description += " " + document.querySelector(`#accent option[value="${accent}"]`).text + "口音";
+      }
+      
+      if (emotion !== "neutral") {
+        description += " " + document.querySelector(`#emotion option[value="${emotion}"]`).text;
+      }
+      
+      if (description === "当前音频:") {
+        description += " 原始音频 (无效果)";
+      }
+      
+      audioDescription.innerHTML = `<p class="is-size-6">${description}</p>`;
+      
+      // 播放音频
+      audioPlayer.play();
+    });
+  });
+</script>
 
 </body>
 </html>
