@@ -35,57 +35,69 @@
   <script src="static/js/bulma-carousel.min.js"></script>
   <script src="static/js/bulma-slider.min.js"></script>
   <script src="static/js/index.js"></script>
-  <style>
-    .leaderboard-table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-    .leaderboard-table th, .leaderboard-table td {
-      padding: 8px;
-      text-align: center;
-      border: 1px solid #ddd;
-    }
-    .leaderboard-table tr:nth-child(even) {
-      background-color: #f2f2f2;
-    }
-    .leaderboard-table th {
-      background-color: #4CAF50;
-      color: white;
-    }
-    .green-text {
-      color: #3cb371;
-    }
-    .red-text {
-      color: #b22222;
-    }
-    .framework-img {
-      max-width: 100%;
-      height: auto;
-      margin: 20px 0;
-    }
-    .detailed-table {
-      font-size: 0.85em;
-      width: 100%;
-      margin-top: 15px;
-      overflow-x: auto;
-      display: block;
-    }
-    .detailed-table th, .detailed-table td {
-      padding: 6px 4px;
-      text-align: center;
-      border: 1px solid #ddd;
-    }
-    .detailed-table tr:nth-child(odd) {
-      background-color: #f9f9f9;
-    }
-    .detailed-table th {
-      background-color: #efefef;
-      font-weight: bold;
-    }
-    .header-row {
-      background-color: #efefef !important;
-    }
-  </style>
+<style>
+  .leaderboard-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .leaderboard-table th,
+  .leaderboard-table td {
+    padding: 8px;
+    text-align: center;
+    border: 1px solid #ddd;
+  }
+  .leaderboard-table tr:nth-child(even) {
+    background-color: #f2f2f2;
+  }
+  .leaderboard-table th {
+    background-color: #4CAF50;
+    color: white;
+  }
+  .green-text {
+    color: #3cb371;
+  }
+  .red-text {
+    color: #b22222;
+  }
+  .framework-img {
+    max-width: 100%;
+    height: auto;
+    margin: 20px 0;
+  }
+
+  /* ====== ← 只改这一段 ====== */
+  .detailed-table {
+    font-size: 0.85em;
+    width: 100%;
+    margin-top: 15px;
+    overflow-x: auto;      /* 保留横向滚动 */
+    /* display: block;     <-- 删除或注释掉这一行 */
+  }
+  /* 让真正的 <table> 在容器里居中 */
+  .detailed-table table {
+    margin: 0 auto;        /* 水平居中 */
+    width: max-content;    /* 只占内容需要的宽度 */
+  }
+  /* ====== ↑↑↑↑↑↑↑ ====== */
+
+  .detailed-table th,
+  .detailed-table td {
+    padding: 6px 4px;
+    text-align: center;
+    border: 1px solid #ddd;
+  }
+  .detailed-table tr:nth-child(odd) {
+    background-color: #f9f9f9;
+  }
+  .detailed-table th {
+    background-color: #efefef;
+    font-weight: bold;
+  }
+  .header-row {
+    background-color: #efefef !important;
+  }
+</style>
+
 </head>
 
 <body>
