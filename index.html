@@ -7,7 +7,7 @@
   <meta property="og:title" content="Jailbreak-AudioBench"/>
   <meta property="og:description"
         content="Exhaustive Evaluation and Analysis of Large Audio-Language Models under Jailbreak Threats"/>
-  <meta property="og:url" content="https://github.com/YourOrg/Jailbreak-AudioBench"/>
+  <meta property="og:url" content="https://github.com/Researchtopic/Code-Jailbreak-AudioBench"/>
   <!-- 建议 1200×630 尺寸 -->
   <meta property="og:image" content="static/images/audiobench_banner.png"/>
 
@@ -35,6 +35,57 @@
   <script src="static/js/bulma-carousel.min.js"></script>
   <script src="static/js/bulma-slider.min.js"></script>
   <script src="static/js/index.js"></script>
+  <style>
+    .leaderboard-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .leaderboard-table th, .leaderboard-table td {
+      padding: 8px;
+      text-align: center;
+      border: 1px solid #ddd;
+    }
+    .leaderboard-table tr:nth-child(even) {
+      background-color: #f2f2f2;
+    }
+    .leaderboard-table th {
+      background-color: #4CAF50;
+      color: white;
+    }
+    .green-text {
+      color: #3cb371;
+    }
+    .red-text {
+      color: #b22222;
+    }
+    .framework-img {
+      max-width: 100%;
+      height: auto;
+      margin: 20px 0;
+    }
+    .detailed-table {
+      font-size: 0.85em;
+      width: 100%;
+      margin-top: 15px;
+      overflow-x: auto;
+      display: block;
+    }
+    .detailed-table th, .detailed-table td {
+      padding: 6px 4px;
+      text-align: center;
+      border: 1px solid #ddd;
+    }
+    .detailed-table tr:nth-child(odd) {
+      background-color: #f9f9f9;
+    }
+    .detailed-table th {
+      background-color: #efefef;
+      font-weight: bold;
+    }
+    .header-row {
+      background-color: #efefef !important;
+    }
+  </style>
 </head>
 
 <body>
@@ -80,15 +131,15 @@
           </h1>
 <!-- ===== 作者信息 ===== -->
 <div class="is-size-5 publication-authors has-text-centered" style="margin-top: 1rem;">
-  <span class="author-block">Hao Cheng<sup style="color:#ed4b82;">1</sup>,</span>
-  <span class="author-block">Erjia Xiao<sup style="color:#ed4b82;">1</sup>,</span>
-  <span class="author-block">Jing Shao<sup style="color:#3498db;">4</sup>,</span>
+  <span class="author-block">Hao Cheng<sup style="color:#ed4b82;">1*</sup>,</span>
+  <span class="author-block">Erjia Xiao<sup style="color:#ed4b82;">1*</sup>,</span>
+  <span class="author-block">Jing Shao<sup style="color:#3498db;">4*</sup>,</span>
   <span class="author-block">Yichi Wang<sup style="color:#9b59b6;">5</sup>,</span>
   <span class="author-block">Le Yang<sup style="color:#f39c12;">3</sup>,</span>
-  <span class="author-block">Chao Shen<sup style="color:#f39c12;">3</sup>,</span>
+  <span class="author-block">Chao Sheng<sup style="color:#f39c12;">3</sup>,</span>
   <span class="author-block">Philip Torr<sup style="color:#6fbf73;">2</sup>,</span>
-  <span class="author-block">Jindong Gu<sup style="color:#6fbf73;">2</sup>,</span>
-  <span class="author-block">Renjing Xu<sup style="color:#ed4b82;">1</sup></span>
+  <span class="author-block">Jindong Gu<sup style="color:#6fbf73;">2†</sup>,</span>
+  <span class="author-block">Renjing Xu<sup style="color:#ed4b82;">1†</sup></span>
 </div>
 
 <div class="is-size-5 publication-authors has-text-centered" style="margin-bottom: 2rem;">
@@ -99,9 +150,13 @@
   <span class="author-block"><sup style="color:#9b59b6;">5</sup>Beijing University of Technology</span>
 </div>
 
+<div class="is-size-6 publication-authors has-text-centered" style="margin-bottom: 1rem;">
+  <span class="author-block">* Equal contribution, † Correspondence authors</span>
+</div>
+
           <!-- ===== Links ===== -->
           <span class="link-block">
-            <a href="https://huggingface.co/datasets/YourOrg/Jailbreak-AudioBench" target="_blank"
+            <a href="https://huggingface.co/datasets/researchtopic/Jailbreak-AudioBench" target="_blank"
                class="external-link button is-normal is-rounded is-dark">
               <span class="icon"><img src="static/images/huggingface.jpg" style="width:16px;height:16px;"></span>
               <span>Hugging Face Dataset</span>
@@ -109,7 +164,7 @@
           </span>
 
           <span class="link-block">
-            <a href="https://github.com/YourOrg/Jailbreak-AudioBench" target="_blank"
+            <a href="https://github.com/Researchtopic/Code-Jailbreak-AudioBench" target="_blank"
                class="external-link button is-normal is-rounded is-dark">
               <span class="icon"><i class="fab fa-github"></i></span><span>Code</span>
             </a>
@@ -153,13 +208,14 @@
             demonstrate the broad applicability of Jailbreak-AudioBench in supporting research on query-based black-box
             attack strategies and in enabling the development of effective audio jailbreak defenses.
           </p>
+          <img src="static/images/framework.png" alt="Framework Overview" class="framework-img">
         </div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ============ AUTHOR INFO "CIRCLE" (保持原图) ============ -->
+<!-- ============ Overview ============ -->
 <section class="hero is-light is-small">
   <div class="hero-body has-text-centered">
     <h1 class="title is-1 mmmu">
@@ -186,10 +242,11 @@
         <h2 class="title is-3">📑 Dataset Composition</h2>
         <div class="content has-text-justified">
           <p>
-            Jailbreak-AudioBench collects <b>4 700</b> base harmful queries from four text-modal jailbreak sets and
-            renders them into speech via <code>gTTS</code>. Each utterance is further processed by seven families of
-            audio-specific edits (tone, speed, emphasis, intonation, background noise, celebrity accent, emotion),
-            yielding over <b>90 000</b> audio samples covering both <em>easy</em> and <em>complex</em> subsets.
+            Jailbreak-AudioBench collects <b>4,700</b> base harmful queries from four text-modal jailbreak sets 
+            (AdvBench, MM-SafetyBench, RedTeam-2K, Safebench) and renders them into speech via <code>gTTS</code>. 
+            Each utterance is further processed by seven families of audio-specific edits (tone, speed, emphasis, 
+            intonation, background noise, celebrity accent, emotion), yielding over <b>90,000</b> audio samples 
+            covering both <em>Explicit</em> and <em>Implicit</em> subsets.
           </p>
         </div>
 
@@ -198,44 +255,44 @@
           <tr>
             <th>Subset</th>
             <th>Base Audios</th>
-            <th>Editing Families</th>
+            <th>Editing Types</th>
             <th>Edited Audios</th>
             <th>Total</th>
           </tr>
           </thead>
           <tbody>
           <tr>
-            <td>Easy</td>
-            <td>2 497</td>
+            <td>Explicit Subtype</td>
+            <td>2,497</td>
             <td>20 types</td>
-            <td>49 940</td>
-            <td>52 437</td>
+            <td>49,940</td>
+            <td>52,437</td>
           </tr>
           <tr>
-            <td>Complex</td>
-            <td>2 203</td>
+            <td>Implicit Subtype</td>
+            <td>2,203</td>
             <td>20 types</td>
-            <td>44 060</td>
-            <td>46 263</td>
+            <td>44,060</td>
+            <td>46,263</td>
           </tr>
           <tr>
-            <td>Easy (Small)</td>
+            <td>Explicit Defense</td>
+            <td>2,497</td>
+            <td>20 types</td>
+            <td>49,940</td>
+            <td>52,437</td>
+          </tr>
+          <tr>
+            <td>Explicit Small</td>
             <td>262</td>
             <td>32 types</td>
-            <td>8 384</td>
-            <td>8 646</td>
-          </tr>
-          <tr>
-            <td>Complex (Small)</td>
-            <td>223</td>
-            <td>32 types</td>
-            <td>7 136</td>
-            <td>7 359</td>
+            <td>8,384</td>
+            <td>8,646</td>
           </tr>
           </tbody>
         </table>
         <h2 class="subtitle has-text-centered" style="font-size:smaller;">
-          "Editing Families" = 4 Tone × 3 Intonation × 2 Speed × 3 Emphasis × 3 Noise × 3 Accent × 2 Emotion
+          "Editing Types" = 4 Tone × 3 Intonation × 2 Speed × 3 Emphasis × 3 Noise × 3 Accent × 2 Emotion
         </h2>
       </div>
     </div>
@@ -255,16 +312,19 @@
           </p>
           <ul>
             <li>
-              <b>Cross-modal transferability.</b> Textual jailbreak prompts that compromise LLMs also succeed on LALMs
-              after ASR transcription, regardless of upstream model.
+              <b>Differential model vulnerability.</b> Models exhibit vastly different levels of susceptibility to audio editing jailbreak. 
+              While SALMONN demonstrates high vulnerability with substantial ASR increases across multiple audio editing types, 
+              SpeechGPT, Qwen2-Audio, and BLSP show remarkable resilience.
             </li>
             <li>
-              <b>Audio-specific brittleness.</b> Seemingly innocuous edits (e.g.\ slight pitch shift or crowd noise)
-              drastically raise the attack success rate (ASR) of certain models (notably SALMONN).
+              <b>Audio-specific brittleness.</b> Even seemingly innocuous edits (e.g., slight pitch shifts or background noise)
+              can drastically raise the attack success rate (ASR) in vulnerable models, revealing critical security considerations 
+              in audio model design.
             </li>
             <li>
-              <b>Alignment duality.</b> Robust alignment must jointly defend <em>both</em> language and audio pipelines,
-              as cascading or end-to-end systems are prone to dual-channel exploits.
+              <b>Processing pipeline insights.</b> Our t-SNE visualization analysis reveals that vulnerability differences stem from 
+              how models process edited audio through their transformer layers, with robust models effectively normalizing audio editing 
+              variations while vulnerable models maintain distinct editing-based feature clusters.
             </li>
           </ul>
         </div>
@@ -278,149 +338,149 @@
   <div class="container is-max-desktop">
     <div class="columns is-centered has-text-centered">
       <div class="column is-four-fifths">
-        <h2 class="title is-3">🎧 交互式音频处理演示</h2>
+        <h2 class="title is-3">🎧 Interactive Audio Processing Demo</h2>
         <div class="content has-text-justified">
           <p>
-            体验不同音频处理参数对语音的影响。选择参数组合后点击"应用"按钮查看效果。
+            Experience the effects of different audio processing parameters on speech. Select parameter combinations and click "Apply Parameters" to see the results.
           </p>
         </div>
         
         <div class="box">
           <div class="columns is-multiline">
-            <!-- 强调 -->
+            <!-- Emphasis -->
             <div class="column is-half">
               <div class="field">
-                <label class="label">强调 (Emphasis)</label>
+                <label class="label">Emphasis</label>
                 <div class="control">
                   <div class="select is-fullwidth">
                     <select id="emphasis">
-                      <option value="none">无</option>
-                      <option value="volume_x_2">音量 x 2</option>
-                      <option value="volume_x_5">音量 x 5</option>
-                      <option value="volume_x_10">音量 x 10</option>
+                      <option value="none">None</option>
+                      <option value="volume_x_2">Volume x 2</option>
+                      <option value="volume_x_5">Volume x 5</option>
+                      <option value="volume_x_10">Volume x 10</option>
                     </select>
                   </div>
                 </div>
               </div>
             </div>
             
-            <!-- 速度 -->
+            <!-- Speed -->
             <div class="column is-half">
               <div class="field">
-                <label class="label">速度 (Speed)</label>
+                <label class="label">Speed</label>
                 <div class="control">
                   <div class="select is-fullwidth">
                     <select id="speed">
-                      <option value="normal">正常</option>
-                      <option value="rate_x_0.5">速率 x 0.5</option>
-                      <option value="rate_x_1.5">速率 x 1.5</option>
+                      <option value="normal">Normal</option>
+                      <option value="rate_x_0.5">Rate x 0.5</option>
+                      <option value="rate_x_1.5">Rate x 1.5</option>
                     </select>
                   </div>
                 </div>
               </div>
             </div>
             
-            <!-- 语调 -->
+            <!-- Intonation -->
             <div class="column is-half">
               <div class="field">
-                <label class="label">语调 (Intonation)</label>
+                <label class="label">Intonation</label>
                 <div class="control">
                   <div class="select is-fullwidth">
                     <select id="intonation">
-                      <option value="normal">正常</option>
-                      <option value="interval+2">间隔 +2</option>
-                      <option value="interval+3">间隔 +3</option>
-                      <option value="interval+4">间隔 +4</option>
+                      <option value="normal">Normal</option>
+                      <option value="interval+2">Interval +2</option>
+                      <option value="interval+3">Interval +3</option>
+                      <option value="interval+4">Interval +4</option>
                     </select>
                   </div>
                 </div>
               </div>
             </div>
             
-            <!-- 音调 -->
+            <!-- Tone -->
             <div class="column is-half">
               <div class="field">
-                <label class="label">音调 (Tone)</label>
+                <label class="label">Tone</label>
                 <div class="control">
                   <div class="select is-fullwidth">
                     <select id="tone">
-                      <option value="normal">正常</option>
-                      <option value="semitone-8">半音 -8</option>
-                      <option value="semitone+4">半音 +4</option>
-                      <option value="semitone+8">半音 +8</option>
+                      <option value="normal">Normal</option>
+                      <option value="semitone-8">Semitone -8</option>
+                      <option value="semitone+4">Semitone +4</option>
+                      <option value="semitone+8">Semitone +8</option>
                     </select>
                   </div>
                 </div>
               </div>
             </div>
             
-            <!-- 背景噪音 -->
+            <!-- Background Noise -->
             <div class="column is-half">
               <div class="field">
-                <label class="label">背景噪音 (Background Noise)</label>
+                <label class="label">Background Noise</label>
                 <div class="control">
                   <div class="select is-fullwidth">
                     <select id="background">
-                      <option value="none">无</option>
-                      <option value="crowd">人群噪音</option>
-                      <option value="machine">机器噪音</option>
-                      <option value="white">白噪音</option>
+                      <option value="none">None</option>
+                      <option value="crowd">Crowd Noise</option>
+                      <option value="machine">Machine Noise</option>
+                      <option value="white">White Noise</option>
                     </select>
                   </div>
                 </div>
               </div>
             </div>
             
-            <!-- 名人口音 -->
+            <!-- Celebrity Accent -->
             <div class="column is-half">
               <div class="field">
-                <label class="label">名人口音 (Celebrity Accent)</label>
+                <label class="label">Celebrity Accent</label>
                 <div class="control">
                   <div class="select is-fullwidth">
                     <select id="accent">
-                      <option value="none">无</option>
-                      <option value="trump" selected>特朗普</option>
-                      <option value="kanye">坎耶·韦斯特</option>
-                      <option value="lucy">刘玉玲</option>
+                      <option value="none">None</option>
+                      <option value="trump" selected>Donald Trump</option>
+                      <option value="kanye">Kanye West</option>
+                      <option value="lucy">Lucy Liu</option>
                     </select>
                   </div>
                 </div>
               </div>
             </div>
             
-            <!-- 情感 -->
+            <!-- Emotion -->
             <div class="column is-half">
               <div class="field">
-                <label class="label">情感 (Emotion)</label>
+                <label class="label">Emotion</label>
                 <div class="control">
                   <div class="select is-fullwidth">
                     <select id="emotion">
-                      <option value="neutral">中性</option>
-                      <option value="laugh">笑声</option>
-                      <option value="scream">尖叫</option>
+                      <option value="neutral">Neutral</option>
+                      <option value="laugh">Laugh</option>
+                      <option value="scream">Scream</option>
                     </select>
                   </div>
                 </div>
               </div>
             </div>
             
-            <!-- 应用按钮 -->
+            <!-- Apply Button -->
             <div class="column is-half">
-              <button id="apply-button" class="button is-primary is-fullwidth">应用参数</button>
+              <button id="apply-button" class="button is-primary is-fullwidth">Apply Parameters</button>
             </div>
           </div>
           
-          <!-- 音频播放器 -->
+          <!-- Audio Player -->
           <div class="mt-4">
-            <h4 class="subtitle is-5">音频示例</h4>
+            <h4 class="subtitle is-5">Audio Example</h4>
             <div id="audio-player-container" class="has-text-centered">
               <audio id="audio-player" controls>
                 <source src="static/audio/Trump.mp3" type="audio/mpeg">
-                您的浏览器不支持音频元素。
+                Your browser does not support the audio element.
               </audio>
             </div>
             <div id="audio-description" class="mt-2">
-              <p class="is-size-6">当前音频: 特朗普口音 (默认样本)</p>
+              <p class="is-size-6">Current audio: Donald Trump accent (default sample)</p>
             </div>
           </div>
         </div>
@@ -436,6 +496,7 @@
       <div class="subtitle has-text-centered" id="leaderboard" style="font-size:24px;">
         🏆 LALMs Leaderboard on Jailbreak-AudioBench
       </div>
+      
       <table class="table leaderboard-table">
         <thead>
         <tr>
@@ -458,28 +519,163 @@
       <h2 class="subtitle has-text-centered" style="font-size:smaller;">
         ASR = Attack Success Rate. Vanilla ASR: unedited audio; Edited ASR: averaged over all edits.
       </h2>
+      
+      <div class="subtitle has-text-centered" style="font-size:24px; margin-top: 30px;">
+        Detailed Model Performance by Edit Type
+      </div>
+      
+      <div class="detailed-table">
+        <table>
+          <thead class="header-row">
+            <tr>
+              <th colspan="2"></th>
+              <th colspan="2">BLSP</th>
+              <th colspan="2">SpeechGPT</th>
+              <th colspan="2">Qwen2-Audio</th>
+              <th colspan="2">SALMONN-7B</th>
+              <th colspan="2">SALMONN-13B</th>
+              <th colspan="2">VITA-1.5</th>
+              <th colspan="2">R1-AQA</th>
+              <th colspan="2">MiniCPM-o-2.6</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="header-row">
+              <td colspan="2"><strong>Original</strong></td>
+              <td colspan="2">47.5%/18.25%</td>
+              <td colspan="2">14.1%/2.45%</td>
+              <td colspan="2">16.8%/6.76%</td>
+              <td colspan="2">31.4%/14.3%</td>
+              <td colspan="2">31.3%/12.89%</td>
+              <td colspan="2">3.7%/2.77%</td>
+              <td colspan="2">12.6%/7.17%</td>
+              <td colspan="2">18.2%/9.03%</td>
+            </tr>
+            <tr>
+              <td rowspan="3" class="header-row"><strong>Emphasis</strong></td>
+              <td>Volume*2</td>
+              <td colspan="2"><span class="red-text">+1.5%</span>/<span class="green-text">-1.6%</span></td>
+              <td colspan="2">-0.3%/0%</td>
+              <td colspan="2"><span class="green-text">-1.6%</span>/-0.7%</td>
+              <td colspan="2"><span class="red-text">+14.4%</span>/<span class="red-text">+3.5%</span></td>
+              <td colspan="2"><span class="red-text">+16.1%</span>/<span class="red-text">+2.3%</span></td>
+              <td colspan="2">+0.4%/+0.3%</td>
+              <td colspan="2"><span class="red-text">+1.4%</span>/-0.3%</td>
+              <td colspan="2"><span class="green-text">-1.1%</span>/+0.4%</td>
+            </tr>
+            <tr>
+              <td>Volume*5</td>
+              <td colspan="2">+0.5%/-0.4%</td>
+              <td colspan="2">-0.8%/-0.1%</td>
+              <td colspan="2"><span class="green-text">-4.3%</span>/0%</td>
+              <td colspan="2"><span class="red-text">+21.3%</span>/<span class="red-text">+5.6%</span></td>
+              <td colspan="2"><span class="red-text">+20.5%</span>/<span class="red-text">+3.4%</span></td>
+              <td colspan="2">+0.2%/0%</td>
+              <td colspan="2">+0.6%/-0.5%</td>
+              <td colspan="2">-0.7%/-0.2%</td>
+            </tr>
+            <tr>
+              <td>Volume*10</td>
+              <td colspan="2">+0.6%/<span class="green-text">-1.2%</span></td>
+              <td colspan="2"><span class="green-text">-5.0%</span>/-0.4%</td>
+              <td colspan="2"><span class="green-text">-4.0%</span>/<span class="green-text">-1.0%</span></td>
+              <td colspan="2"><span class="red-text">+21.4%</span>/<span class="red-text">+5.9%</span></td>
+              <td colspan="2"><span class="red-text">+19.9%</span>/<span class="red-text">+3.5%</span></td>
+              <td colspan="2">0%/+0.5%</td>
+              <td colspan="2"><span class="red-text">+2.0%</span>/-0.4%</td>
+              <td colspan="2"><span class="red-text">+1.0%</span>/-0.8%</td>
+            </tr>
+            <tr>
+              <td rowspan="2" class="header-row"><strong>Speed</strong></td>
+              <td>Rate*0.5</td>
+              <td colspan="2"><span class="red-text">+2.8%</span>/+0.6%</td>
+              <td colspan="2">-0.8%/-0.4%</td>
+              <td colspan="2"><span class="green-text">-4.4%</span>/<span class="green-text">-1.9%</span></td>
+              <td colspan="2"><span class="red-text">+13.3%</span>/<span class="red-text">+1.9%</span></td>
+              <td colspan="2"><span class="red-text">+16.8%</span>/<span class="red-text">+3.0%</span></td>
+              <td colspan="2"><span class="red-text">+2.2%</span>/+0.6%</td>
+              <td colspan="2"><span class="red-text">+1.0%</span>/<span class="green-text">-1.1%</span></td>
+              <td colspan="2"><span class="red-text">+1.6%</span>/+0.4%</td>
+            </tr>
+            <tr>
+              <td>Rate*1.5</td>
+              <td colspan="2"><span class="green-text">-2.6%</span>/<span class="red-text">+2.7%</span></td>
+              <td colspan="2">+0.2%/-0.1%</td>
+              <td colspan="2"><span class="red-text">+1.1%</span>/+0.1%</td>
+              <td colspan="2"><span class="red-text">+14.3%</span>/<span class="green-text">-4.2%</span></td>
+              <td colspan="2"><span class="green-text">-22.9%</span>/<span class="green-text">-8.4%</span></td>
+              <td colspan="2">-0.5%/+0.4%</td>
+              <td colspan="2"><span class="red-text">+2.0%</span>/+0.4%</td>
+              <td colspan="2"><span class="green-text">-2.2%</span>/-0.4%</td>
+            </tr>
+            <tr>
+              <td rowspan="3" class="header-row"><strong>Intonation</strong></td>
+              <td>Interval+2</td>
+              <td colspan="2"><span class="green-text">-4.3%</span>/<span class="green-text">-2.0%</span></td>
+              <td colspan="2"><span class="green-text">-8.1%</span>/<span class="green-text">-1.0%</span></td>
+              <td colspan="2"><span class="green-text">-5.1%</span>/-0.7%</td>
+              <td colspan="2"><span class="green-text">-27.6%</span>/<span class="green-text">-11.0%</span></td>
+              <td colspan="2"><span class="green-text">-1.0%</span>/<span class="green-text">-1.4%</span></td>
+              <td colspan="2"><span class="red-text">+5.6%</span>/<span class="red-text">+1.3%</span></td>
+              <td colspan="2"><span class="red-text">+1.6%</span>/-0.5%</td>
+              <td colspan="2">+0.3%/-0.6%</td>
+            </tr>
+            <tr>
+              <td>Interval+3</td>
+              <td colspan="2"><span class="green-text">-8.0%</span>/<span class="green-text">-3.4%</span></td>
+              <td colspan="2"><span class="green-text">-11.3%</span>/-0.8%</td>
+              <td colspan="2"><span class="green-text">-4.4%</span>/<span class="green-text">-1.9%</span></td>
+              <td colspan="2"><span class="green-text">-27.0%</span>/<span class="green-text">-11.1%</span></td>
+              <td colspan="2"><span class="red-text">+4.4%</span>/+0.1%</td>
+              <td colspan="2"><span class="red-text">+5.2%</span>/+0.5%</td>
+              <td colspan="2"><span class="red-text">+3.0%</span>/-0.3%</td>
+              <td colspan="2"><span class="red-text">+1.4%</span>/<span class="green-text">-1.1%</span></td>
+            </tr>
+            <tr>
+              <td>Interval+4</td>
+              <td colspan="2"><span class="green-text">-13.6%</span>/<span class="green-text">-3.1%</span></td>
+              <td colspan="2"><span class="green-text">-11.8%</span>/-0.9%</td>
+              <td colspan="2"><span class="green-text">-3.3%</span>/-0.5%</td>
+              <td colspan="2"><span class="green-text">-25.0%</span>/<span class="green-text">-11.3%</span></td>
+              <td colspan="2"><span class="red-text">+11.7%</span>/<span class="red-text">+2.0%</span></td>
+              <td colspan="2"><span class="red-text">+3.7%</span>/+0.1%</td>
+              <td colspan="2"><span class="red-text">+4.7%</span>/+0.1%</td>
+              <td colspan="2"><span class="red-text">+3.8%</span>/-0.4%</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 </section>
 
-<!-- ============ SAMPLE CASE CAROUSEL (保持 Benchmark 内部图片不变，可拓展) ============ -->
-<section class="hero is-small">
+<!-- ============ APPLICATIONS ============ -->
+<section class="hero is-light is-small">
   <div class="hero-body">
-    <div class="container">
-      <div id="results-carousel" class="carousel results-carousel">
-        <div class="item">
-          <img src="static/images/logic.png" alt="Case 1"/>
-          <h2 class="subtitle has-text-centered">
-            Successful transfer attack (Logic) with random-noise audio.
-          </h2>
+    <div class="container is-max-desktop">
+      <h2 class="title is-3 has-text-centered">🔬 Research Applications</h2>
+      <div class="content has-text-justified">
+        <p>
+          Jailbreak-AudioBench provides a foundation for two critical research directions:
+        </p>
+        
+        <h3 class="subtitle is-4">1. Query-based Black Box Attack for LALMs</h3>
+        <p>
+          Our analysis reveals that systematically combining audio editing techniques can significantly increase attack success rates. 
+          For example, GPT-4o-Audio's vulnerability increases from just 0.76% to 8.40% when exposed to optimized combinations of audio edits.
+          This demonstrates that even commercial-grade models remain susceptible to carefully crafted audio manipulations.
+        </p>
+        
+        <h3 class="subtitle is-4">2. Development of Defense Methods</h3>
+        <p>
+          We explore prompt-based defense strategies by prepending safety instructions in audio format.
+          This lightweight approach consistently reduces vulnerability across all evaluated models, 
+          though significant improvement opportunities remain for more robust defenses.
+        </p>
+        
+        <div class="has-text-centered">
+          <img src="static/images/defense_asr.png" alt="Defense ASR Comparison" style="max-width:90%; margin:20px auto;">
         </div>
-        <div class="item">
-          <img src="static/images/template.png" alt="Case 2"/>
-          <h2 class="subtitle has-text-centered">
-            Successful transfer attack (Template) after tone-shift edit.
-          </h2>
-        </div>
-        <!-- 其余图片保持原来顺序，如需新增直接追加 -->
       </div>
     </div>
   </div>
@@ -489,9 +685,9 @@
 <section class="section" id="BibTeX">
   <div class="container is-max-desktop content">
     <h2 class="title">BibTeX</h2>
-    <pre><code>@misc{your2025jailbreakaudio,
+    <pre><code>@misc{cheng2025jailbreakaudio,
   title  = {Jailbreak-AudioBench: Exhaustive Evaluation and Analysis of Large Audio Language Models under Jailbreak Threats},
-  author = {First Author and Second Author and …},
+  author = {Cheng, Hao and Xiao, Erjia and Shao, Jing and Wang, Yichi and Yang, Le and Sheng, Chao and Torr, Philip and Gu, Jindong and Xu, Renjing},
   year   = {2025},
   eprint = {TODO_arXivID},
   archivePrefix = {arXiv},
@@ -526,7 +722,7 @@
     const audioDescription = document.getElementById('audio-description');
     
     applyButton.addEventListener('click', function() {
-      // 获取所有选项值
+      // Get all option values
       const emphasis = document.getElementById('emphasis').value;
       const speed = document.getElementById('speed').value;
       const intonation = document.getElementById('intonation').value;
@@ -535,15 +731,12 @@
       const accent = document.getElementById('accent').value;
       const emotion = document.getElementById('emotion').value;
       
-      // 我们实际上始终使用同一个音频文件，但可以更新描述以反映所选参数
-      // 在实际应用中，这里可以根据参数组合加载不同的音频文件
-      
-      // 重置音频以重新播放
+      // Reset audio to replay
       audioPlayer.pause();
       audioPlayer.currentTime = 0;
       
-      // 构建描述
-      let description = "当前音频:";
+      // Build description
+      let description = "Current audio:";
       
       if (emphasis !== "none") {
         description += " " + document.querySelector(`#emphasis option[value="${emphasis}"]`).text;
@@ -566,20 +759,20 @@
       }
       
       if (accent !== "none") {
-        description += " " + document.querySelector(`#accent option[value="${accent}"]`).text + "口音";
+        description += " " + document.querySelector(`#accent option[value="${accent}"]`).text + " accent";
       }
       
       if (emotion !== "neutral") {
         description += " " + document.querySelector(`#emotion option[value="${emotion}"]`).text;
       }
       
-      if (description === "当前音频:") {
-        description += " 原始音频 (无效果)";
+      if (description === "Current audio:") {
+        description += " Original audio (no effects)";
       }
       
       audioDescription.innerHTML = `<p class="is-size-6">${description}</p>`;
       
-      // 播放音频
+      // Play audio
       audioPlayer.play();
     });
   });
