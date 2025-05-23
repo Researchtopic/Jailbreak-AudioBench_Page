@@ -321,146 +321,127 @@
         <h2 class="title is-3">🎧 Interactive Audio Processing Demo</h2>
         <div class="content has-text-justified">
           <p>
-            Experience the effects of different audio processing parameters on speech. Select parameter combinations and click "Apply Parameters" to see the results.
+            Experience our audio processing techniques step by step. First select a base audio sample, 
+            then choose a processing method, and finally select specific parameters to hear the results.
           </p>
         </div>
         
         <div class="box">
+          <!-- 文件上传区域 -->
+          <div class="field">
+            <label class="label">Upload Your Own Audio (Optional)</label>
+            <div class="file has-name is-boxed is-centered mb-4">
+              <label class="file-label">
+                <input class="file-input" type="file" name="audio-upload" id="audio-upload" accept=".mp3,.wav,.ogg">
+                <span class="file-cta">
+                  <span class="file-icon">
+                    <i class="fas fa-upload"></i>
+                  </span>
+                  <span class="file-label">
+                    Choose audio file...
+                  </span>
+                </span>
+                <span class="file-name" id="file-name">
+                  No file selected
+                </span>
+              </label>
+            </div>
+            <p class="help">Upload your own audio file, or use our pre-recorded samples below.</p>
+          </div>
+
+          <!-- 处理状态提示 -->
+          <div id="processing-status" class="notification is-info is-hidden">
+            <button class="delete"></button>
+            <strong>Processing audio...</strong> Applying the selected effect to your audio.
+          </div>
+
+          <!-- 三级选择系统 -->
           <div class="columns is-multiline">
-            <!-- Emphasis -->
-            <div class="column is-half">
+            <!-- 第一级：选择基础音频 -->
+            <div class="column is-full">
               <div class="field">
-                <label class="label">Emphasis</label>
+                <label class="label">Step 1: Select Base Audio Sample</label>
                 <div class="control">
-                  <div class="select is-fullwidth">
-                    <select id="emphasis">
-                      <option value="none">None</option>
-                      <option value="volume_x_2">Volume x 2</option>
-                      <option value="volume_x_5">Volume x 5</option>
-                      <option value="volume_x_10">Volume x 10</option>
+                  <div class="select is-fullwidth is-large">
+                    <select id="base-audio">
+                      <option value="trump" selected>Donald Trump Accent</option>
+                      <option value="kanye">Kanye West Accent</option>
+                      <option value="lucy">Lucy Liu Accent</option>
                     </select>
                   </div>
                 </div>
               </div>
             </div>
             
-            <!-- Speed -->
+            <!-- 第二级：选择处理类型 -->
             <div class="column is-half">
               <div class="field">
-                <label class="label">Speed</label>
+                <label class="label">Step 2: Select Processing Type</label>
                 <div class="control">
                   <div class="select is-fullwidth">
-                    <select id="speed">
-                      <option value="normal">Normal</option>
-                      <option value="rate_x_0.5">Rate x 0.5</option>
-                      <option value="rate_x_1.5">Rate x 1.5</option>
+                    <select id="processing-type">
+                      <option value="original">Original (No Processing)</option>
+                      <option value="speed">Speed Adjustment</option>
+                      <option value="tone">Tone/Pitch Shift</option>
+                      <option value="emphasis">Volume Emphasis</option>
+                      <option value="intonation">Intonation Pattern</option>
+                      <option value="background">Background Noise</option>
+                      <option value="emotion">Emotion Effect</option>
                     </select>
                   </div>
                 </div>
               </div>
             </div>
             
-            <!-- Intonation -->
+            <!-- 第三级：选择具体参数 -->
             <div class="column is-half">
               <div class="field">
-                <label class="label">Intonation</label>
+                <label class="label">Step 3: Select Specific Parameters</label>
                 <div class="control">
                   <div class="select is-fullwidth">
-                    <select id="intonation">
-                      <option value="normal">Normal</option>
-                      <option value="interval+2">Interval +2</option>
-                      <option value="interval+3">Interval +3</option>
-                      <option value="interval+4">Interval +4</option>
+                    <select id="specific-parameter">
+                      <option value="none">No processing applied</option>
                     </select>
                   </div>
                 </div>
               </div>
             </div>
             
-            <!-- Tone -->
-            <div class="column is-half">
-              <div class="field">
-                <label class="label">Tone</label>
-                <div class="control">
-                  <div class="select is-fullwidth">
-                    <select id="tone">
-                      <option value="normal">Normal</option>
-                      <option value="semitone-8">Semitone -8</option>
-                      <option value="semitone+4">Semitone +4</option>
-                      <option value="semitone+8">Semitone +8</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <!-- Background Noise -->
-            <div class="column is-half">
-              <div class="field">
-                <label class="label">Background Noise</label>
-                <div class="control">
-                  <div class="select is-fullwidth">
-                    <select id="background">
-                      <option value="none">None</option>
-                      <option value="crowd">Crowd Noise</option>
-                      <option value="machine">Machine Noise</option>
-                      <option value="white">White Noise</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <!-- Celebrity Accent -->
-            <div class="column is-half">
-              <div class="field">
-                <label class="label">Celebrity Accent</label>
-                <div class="control">
-                  <div class="select is-fullwidth">
-                    <select id="accent">
-                      <option value="none">None</option>
-                      <option value="trump" selected>Donald Trump</option>
-                      <option value="kanye">Kanye West</option>
-                      <option value="lucy">Lucy Liu</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <!-- Emotion -->
-            <div class="column is-half">
-              <div class="field">
-                <label class="label">Emotion</label>
-                <div class="control">
-                  <div class="select is-fullwidth">
-                    <select id="emotion">
-                      <option value="neutral">Neutral</option>
-                      <option value="laugh">Laugh</option>
-                      <option value="scream">Scream</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <!-- Apply Button -->
-            <div class="column is-half">
-              <button id="apply-button" class="button is-primary is-fullwidth">Apply Parameters</button>
+            <!-- 应用按钮 -->
+            <div class="column is-full">
+              <button id="apply-button" class="button is-primary is-fullwidth is-large">
+                <span class="icon">
+                  <i class="fas fa-play"></i>
+                </span>
+                <span>Play Audio with Selected Effect</span>
+              </button>
             </div>
           </div>
           
           <!-- Audio Player -->
-          <div class="mt-4">
-            <h4 class="subtitle is-5">Audio Example</h4>
+          <div class="mt-5">
+            <h4 class="subtitle is-5">Audio Result</h4>
             <div id="audio-player-container" class="has-text-centered">
-              <audio id="audio-player" controls>
-                <source src="static/audio/Trump.mp3" type="audio/mpeg">
+              <audio id="audio-player" controls style="width: 100%; max-width: 500px;">
+                <source src="static/audio/base/Trump.mp3" type="audio/mpeg" id="audio-source">
                 Your browser does not support the audio element.
               </audio>
             </div>
-            <div id="audio-description" class="mt-2">
-              <p class="is-size-6">Current audio: Donald Trump accent (default sample)</p>
+            
+            <!-- 当前音频信息 -->
+            <div class="mt-3" id="audio-info">
+              <div class="tags has-addons is-centered">
+                <span class="tag is-dark">Current Audio</span>
+                <span class="tag is-info" id="audio-desc">Donald Trump (Original)</span>
+              </div>
+            </div>
+
+            <!-- 效果信息展示 -->
+            <div class="mt-4" id="effect-info">
+              <div class="notification is-light">
+                <strong>Current Selection:</strong>
+                <span id="selection-summary">Donald Trump - Original - No processing</span>
+              </div>
             </div>
           </div>
         </div>
@@ -840,64 +821,281 @@
 <!-- 添加JavaScript代码在页面底部 -->
 <script>
   document.addEventListener('DOMContentLoaded', function() {
+    // Initialize variables
+    const fileInput = document.getElementById('audio-upload');
+    const fileName = document.getElementById('file-name');
+    const baseAudioSelect = document.getElementById('base-audio');
+    const processingTypeSelect = document.getElementById('processing-type');
+    const specificParameterSelect = document.getElementById('specific-parameter');
     const applyButton = document.getElementById('apply-button');
     const audioPlayer = document.getElementById('audio-player');
-    const audioDescription = document.getElementById('audio-description');
+    const audioSource = document.getElementById('audio-source');
+    const audioDesc = document.getElementById('audio-desc');
+    const processingStatus = document.getElementById('processing-status');
+    const selectionSummary = document.getElementById('selection-summary');
     
-    applyButton.addEventListener('click', function() {
-      // Get all option values
-      const emphasis = document.getElementById('emphasis').value;
-      const speed = document.getElementById('speed').value;
-      const intonation = document.getElementById('intonation').value;
-      const tone = document.getElementById('tone').value;
-      const background = document.getElementById('background').value;
-      const accent = document.getElementById('accent').value;
-      const emotion = document.getElementById('emotion').value;
-      
-      // Reset audio to replay
-      audioPlayer.pause();
-      audioPlayer.currentTime = 0;
-      
-      // Build description
-      let description = "Current audio:";
-      
-      if (emphasis !== "none") {
-        description += " " + document.querySelector(`#emphasis option[value="${emphasis}"]`).text;
+    // Parameter options for each processing type
+    const parameterOptions = {
+      original: {
+        'none': 'No processing applied'
+      },
+      speed: {
+        'speed_0.5': 'Speed x 0.5 (Slower)',
+        'speed_1.5': 'Speed x 1.5 (Faster)'
+      },
+      tone: {
+        'tone_-8': 'Semitone -8 (Lower pitch)',
+        'tone_+4': 'Semitone +4 (Higher pitch)',
+        'tone_+8': 'Semitone +8 (Much higher pitch)'
+      },
+      emphasis: {
+        'emphasis_x2': 'Volume x 2',
+        'emphasis_x5': 'Volume x 5',
+        'emphasis_x10': 'Volume x 10'
+      },
+      intonation: {
+        'intonation_+2': 'Interval +2',
+        'intonation_+3': 'Interval +3',
+        'intonation_+4': 'Interval +4'
+      },
+      background: {
+        'noise_crowd': 'Crowd Noise',
+        'noise_machine': 'Machine Noise',
+        'noise_white': 'White Noise'
+      },
+      emotion: {
+        'emotion_laugh': 'Laugh Effect',
+        'emotion_scream': 'Scream Effect'
       }
+    };
+    
+    // Base audio names
+    const baseAudioNames = {
+      'trump': 'Donald Trump',
+      'kanye': 'Kanye West',
+      'lucy': 'Lucy Liu'
+    };
+    
+    // Processing type names
+    const processingTypeNames = {
+      'original': 'Original',
+      'speed': 'Speed Adjustment',
+      'tone': 'Tone/Pitch Shift',
+      'emphasis': 'Volume Emphasis',
+      'intonation': 'Intonation Pattern',
+      'background': 'Background Noise',
+      'emotion': 'Emotion Effect'
+    };
+    
+    let currentUploadedFile = null;
+    let isUploaded = false;
+    
+    // File upload handling
+    fileInput.addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
       
-      if (speed !== "normal") {
-        description += " " + document.querySelector(`#speed option[value="${speed}"]`).text;
-      }
+      fileName.textContent = file.name;
       
-      if (intonation !== "normal") {
-        description += " " + document.querySelector(`#intonation option[value="${intonation}"]`).text;
-      }
+      // Create object URL for the uploaded file
+      const fileURL = URL.createObjectURL(file);
+      currentUploadedFile = fileURL;
+      isUploaded = true;
       
-      if (tone !== "normal") {
-        description += " " + document.querySelector(`#tone option[value="${tone}"]`).text;
-      }
+      // Update audio player
+      audioSource.src = fileURL;
+      audioPlayer.load();
+      audioDesc.textContent = `Uploaded file: ${file.name}`;
       
-      if (background !== "none") {
-        description += " " + document.querySelector(`#background option[value="${background}"]`).text;
-      }
+      // Update summary
+      updateSelectionSummary();
       
-      if (accent !== "none") {
-        description += " " + document.querySelector(`#accent option[value="${accent}"]`).text + " accent";
-      }
-      
-      if (emotion !== "neutral") {
-        description += " " + document.querySelector(`#emotion option[value="${emotion}"]`).text;
-      }
-      
-      if (description === "Current audio:") {
-        description += " Original audio (no effects)";
-      }
-      
-      audioDescription.innerHTML = `<p class="is-size-6">${description}</p>`;
-      
-      // Play audio
-      audioPlayer.play();
+      // Show success message
+      showMessage(`Successfully uploaded: ${file.name}`, 'is-success');
     });
+    
+    // Processing type change handler
+    processingTypeSelect.addEventListener('change', function() {
+      updateParameterOptions();
+      updateSelectionSummary();
+    });
+    
+    // Base audio change handler
+    baseAudioSelect.addEventListener('change', function() {
+      updateSelectionSummary();
+      // If no upload, update audio source immediately
+      if (!isUploaded) {
+        updateAudioSource();
+      }
+    });
+    
+    // Parameter change handler
+    specificParameterSelect.addEventListener('change', function() {
+      updateSelectionSummary();
+    });
+    
+    // Apply button handler
+    applyButton.addEventListener('click', function() {
+      showProcessingStatus();
+      
+      // Simulate processing delay
+      setTimeout(() => {
+        applyAudioEffect();
+        hideProcessingStatus();
+      }, 1000);
+    });
+    
+    function updateParameterOptions() {
+      const processingType = processingTypeSelect.value;
+      const options = parameterOptions[processingType] || {};
+      
+      // Clear existing options
+      specificParameterSelect.innerHTML = '';
+      
+      // Add new options
+      Object.entries(options).forEach(([value, text]) => {
+        const option = document.createElement('option');
+        option.value = value;
+        option.textContent = text;
+        specificParameterSelect.appendChild(option);
+      });
+      
+      // Select first option
+      if (specificParameterSelect.options.length > 0) {
+        specificParameterSelect.selectedIndex = 0;
+      }
+    }
+    
+    function updateSelectionSummary() {
+      const baseAudio = baseAudioSelect.value;
+      const processingType = processingTypeSelect.value;
+      const parameter = specificParameterSelect.value;
+      
+      if (isUploaded && currentUploadedFile) {
+        const processingName = processingTypeNames[processingType] || processingType;
+        const paramName = specificParameterSelect.options[specificParameterSelect.selectedIndex]?.textContent || 'None';
+        selectionSummary.textContent = `Uploaded File - ${processingName} - ${paramName}`;
+      } else {
+        const baseName = baseAudioNames[baseAudio] || baseAudio;
+        const processingName = processingTypeNames[processingType] || processingType;
+        const paramName = specificParameterSelect.options[specificParameterSelect.selectedIndex]?.textContent || 'None';
+        selectionSummary.textContent = `${baseName} - ${processingName} - ${paramName}`;
+      }
+    }
+    
+    function updateAudioSource() {
+      if (isUploaded && currentUploadedFile) {
+        audioSource.src = currentUploadedFile;
+        audioDesc.textContent = 'Your uploaded file';
+      } else {
+        const baseAudio = baseAudioSelect.value;
+        audioSource.src = `static/audio/base/${baseAudio.charAt(0).toUpperCase() + baseAudio.slice(1)}.mp3`;
+        audioDesc.textContent = `${baseAudioNames[baseAudio]} (Original)`;
+      }
+      audioPlayer.load();
+    }
+    
+    function applyAudioEffect() {
+      if (isUploaded && currentUploadedFile) {
+        // For uploaded files, just play the original with a simulation message
+        audioSource.src = currentUploadedFile;
+        audioDesc.textContent = 'Your uploaded file (Effect simulation)';
+        showMessage('Note: Effect simulation for uploaded files. Actual processing requires server capabilities.', 'is-warning');
+      } else {
+        // For base samples, try to load the processed version
+        const baseAudio = baseAudioSelect.value;
+        const processingType = processingTypeSelect.value;
+        const parameter = specificParameterSelect.value;
+        
+        let audioPath;
+        let description;
+        
+        if (processingType === 'original' || parameter === 'none') {
+          // Play original
+          audioPath = `static/audio/base/${baseAudio.charAt(0).toUpperCase() + baseAudio.slice(1)}.mp3`;
+          description = `${baseAudioNames[baseAudio]} (Original)`;
+        } else {
+          // Play processed version
+          audioPath = `static/audio/processed/${baseAudio.charAt(0).toUpperCase() + baseAudio.slice(1)}/${parameter}.mp3`;
+          const paramName = specificParameterSelect.options[specificParameterSelect.selectedIndex].textContent;
+          description = `${baseAudioNames[baseAudio]} (${paramName})`;
+        }
+        
+        audioSource.src = audioPath;
+        audioDesc.textContent = description;
+        
+        // Handle file not found
+        audioPlayer.addEventListener('error', function handleError() {
+          showMessage(`Audio file not found: ${parameter}. Using original audio.`, 'is-warning');
+          audioSource.src = `static/audio/base/${baseAudio.charAt(0).toUpperCase() + baseAudio.slice(1)}.mp3`;
+          audioDesc.textContent = `${baseAudioNames[baseAudio]} (Original - Processed version not available)`;
+          audioPlayer.removeEventListener('error', handleError);
+          audioPlayer.load();
+        });
+      }
+      
+      audioPlayer.load();
+      
+      // Auto play
+      audioPlayer.play().catch(e => {
+        console.log('Autoplay prevented by browser');
+      });
+      
+      showMessage('Audio loaded successfully!', 'is-success');
+    }
+    
+    function showProcessingStatus() {
+      processingStatus.classList.remove('is-hidden');
+      applyButton.classList.add('is-loading');
+    }
+    
+    function hideProcessingStatus() {
+      processingStatus.classList.add('is-hidden');
+      applyButton.classList.remove('is-loading');
+    }
+    
+    function showMessage(text, type) {
+      // Remove existing messages
+      const existingMessages = document.querySelectorAll('.temp-message');
+      existingMessages.forEach(msg => msg.remove());
+      
+      // Create new message
+      const messageDiv = document.createElement('div');
+      messageDiv.className = `notification ${type} temp-message`;
+      messageDiv.innerHTML = `
+        <button class="delete"></button>
+        ${text}
+      `;
+      
+      // Insert after processing status
+      processingStatus.parentNode.insertBefore(messageDiv, processingStatus.nextSibling);
+      
+      // Add delete functionality
+      const deleteBtn = messageDiv.querySelector('.delete');
+      deleteBtn.addEventListener('click', () => {
+        messageDiv.remove();
+      });
+      
+      // Auto remove after 5 seconds
+      setTimeout(() => {
+        if (messageDiv.parentNode) {
+          messageDiv.remove();
+        }
+      }, 5000);
+    }
+    
+    // Handle processing status close button
+    const processingDeleteBtn = processingStatus.querySelector('.delete');
+    if (processingDeleteBtn) {
+      processingDeleteBtn.addEventListener('click', () => {
+        hideProcessingStatus();
+      });
+    }
+    
+    // Initialize
+    updateParameterOptions();
+    updateSelectionSummary();
+    updateAudioSource();
   });
 </script>
 
