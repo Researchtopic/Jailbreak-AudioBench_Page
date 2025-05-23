@@ -321,13 +321,12 @@
         <h2 class="title is-3">🎧 Interactive Audio Processing Demo</h2>
         <div class="content has-text-justified">
           <p>
-            Experience our audio processing techniques step by step. First select a base audio sample, 
+            Experience our audio processing techniques step by step. Select a base audio sample, 
             then choose a processing method, and finally select specific parameters to hear the results.
           </p>
         </div>
         
-      
-
+        <div class="box">
           <!-- 处理状态提示 -->
           <div id="processing-status" class="notification is-info is-hidden">
             <button class="delete"></button>
@@ -801,8 +800,6 @@
 <script>
   document.addEventListener('DOMContentLoaded', function() {
     // Initialize variables
-    const fileInput = document.getElementById('audio-upload');
-    const fileName = document.getElementById('file-name');
     const baseAudioSelect = document.getElementById('base-audio');
     const processingTypeSelect = document.getElementById('processing-type');
     const specificParameterSelect = document.getElementById('specific-parameter');
@@ -866,33 +863,6 @@
       'emotion': 'Emotion Effect'
     };
     
-    let currentUploadedFile = null;
-    let isUploaded = false;
-    
-    // File upload handling
-    fileInput.addEventListener('change', function(e) {
-      const file = e.target.files[0];
-      if (!file) return;
-      
-      fileName.textContent = file.name;
-      
-      // Create object URL for the uploaded file
-      const fileURL = URL.createObjectURL(file);
-      currentUploadedFile = fileURL;
-      isUploaded = true;
-      
-      // Update audio player
-      audioSource.src = fileURL;
-      audioPlayer.load();
-      audioDesc.textContent = `Uploaded file: ${file.name}`;
-      
-      // Update summary
-      updateSelectionSummary();
-      
-      // Show success message
-      showMessage(`Successfully uploaded: ${file.name}`, 'is-success');
-    });
-    
     // Processing type change handler
     processingTypeSelect.addEventListener('change', function() {
       updateParameterOptions();
@@ -902,10 +872,7 @@
     // Base audio change handler
     baseAudioSelect.addEventListener('change', function() {
       updateSelectionSummary();
-      // If no upload, update audio source immediately
-      if (!isUploaded) {
-        updateAudioSource();
-      }
+      updateAudioSource();
     });
     
     // Parameter change handler
@@ -948,70 +915,50 @@
     function updateSelectionSummary() {
       const baseAudio = baseAudioSelect.value;
       const processingType = processingTypeSelect.value;
-      const parameter = specificParameterSelect.value;
       
-      if (isUploaded && currentUploadedFile) {
-        const processingName = processingTypeNames[processingType] || processingType;
-        const paramName = specificParameterSelect.options[specificParameterSelect.selectedIndex]?.textContent || 'None';
-        selectionSummary.textContent = `Uploaded File - ${processingName} - ${paramName}`;
-      } else {
-        const baseName = baseAudioNames[baseAudio] || baseAudio;
-        const processingName = processingTypeNames[processingType] || processingType;
-        const paramName = specificParameterSelect.options[specificParameterSelect.selectedIndex]?.textContent || 'None';
-        selectionSummary.textContent = `${baseName} - ${processingName} - ${paramName}`;
-      }
+      const baseName = baseAudioNames[baseAudio] || baseAudio;
+      const processingName = processingTypeNames[processingType] || processingType;
+      const paramName = specificParameterSelect.options[specificParameterSelect.selectedIndex]?.textContent || 'None';
+      selectionSummary.textContent = `${baseName} - ${processingName} - ${paramName}`;
     }
     
     function updateAudioSource() {
-      if (isUploaded && currentUploadedFile) {
-        audioSource.src = currentUploadedFile;
-        audioDesc.textContent = 'Your uploaded file';
-      } else {
-        const baseAudio = baseAudioSelect.value;
-        audioSource.src = `static/audio/base/${baseAudio.charAt(0).toUpperCase() + baseAudio.slice(1)}.mp3`;
-        audioDesc.textContent = `${baseAudioNames[baseAudio]} (Original)`;
-      }
+      const baseAudio = baseAudioSelect.value;
+      audioSource.src = `static/audio/base/${baseAudio.charAt(0).toUpperCase() + baseAudio.slice(1)}.mp3`;
+      audioDesc.textContent = `${baseAudioNames[baseAudio]} (Original)`;
       audioPlayer.load();
     }
     
     function applyAudioEffect() {
-      if (isUploaded && currentUploadedFile) {
-        // For uploaded files, just play the original with a simulation message
-        audioSource.src = currentUploadedFile;
-        audioDesc.textContent = 'Your uploaded file (Effect simulation)';
-        showMessage('Note: Effect simulation for uploaded files. Actual processing requires server capabilities.', 'is-warning');
+      const baseAudio = baseAudioSelect.value;
+      const processingType = processingTypeSelect.value;
+      const parameter = specificParameterSelect.value;
+      
+      let audioPath;
+      let description;
+      
+      if (processingType === 'original' || parameter === 'none') {
+        // Play original
+        audioPath = `static/audio/base/${baseAudio.charAt(0).toUpperCase() + baseAudio.slice(1)}.mp3`;
+        description = `${baseAudioNames[baseAudio]} (Original)`;
       } else {
-        // For base samples, try to load the processed version
-        const baseAudio = baseAudioSelect.value;
-        const processingType = processingTypeSelect.value;
-        const parameter = specificParameterSelect.value;
-        
-        let audioPath;
-        let description;
-        
-        if (processingType === 'original' || parameter === 'none') {
-          // Play original
-          audioPath = `static/audio/base/${baseAudio.charAt(0).toUpperCase() + baseAudio.slice(1)}.mp3`;
-          description = `${baseAudioNames[baseAudio]} (Original)`;
-        } else {
-          // Play processed version
-          audioPath = `static/audio/processed/${baseAudio.charAt(0).toUpperCase() + baseAudio.slice(1)}/${parameter}.mp3`;
-          const paramName = specificParameterSelect.options[specificParameterSelect.selectedIndex].textContent;
-          description = `${baseAudioNames[baseAudio]} (${paramName})`;
-        }
-        
-        audioSource.src = audioPath;
-        audioDesc.textContent = description;
-        
-        // Handle file not found
-        audioPlayer.addEventListener('error', function handleError() {
-          showMessage(`Audio file not found: ${parameter}. Using original audio.`, 'is-warning');
-          audioSource.src = `static/audio/base/${baseAudio.charAt(0).toUpperCase() + baseAudio.slice(1)}.mp3`;
-          audioDesc.textContent = `${baseAudioNames[baseAudio]} (Original - Processed version not available)`;
-          audioPlayer.removeEventListener('error', handleError);
-          audioPlayer.load();
-        });
+        // Play processed version
+        audioPath = `static/audio/processed/${baseAudio.charAt(0).toUpperCase() + baseAudio.slice(1)}/${parameter}.mp3`;
+        const paramName = specificParameterSelect.options[specificParameterSelect.selectedIndex].textContent;
+        description = `${baseAudioNames[baseAudio]} (${paramName})`;
       }
+      
+      audioSource.src = audioPath;
+      audioDesc.textContent = description;
+      
+      // Handle file not found
+      audioPlayer.addEventListener('error', function handleError() {
+        showMessage(`Audio file not found: ${parameter}. Using original audio.`, 'is-warning');
+        audioSource.src = `static/audio/base/${baseAudio.charAt(0).toUpperCase() + baseAudio.slice(1)}.mp3`;
+        audioDesc.textContent = `${baseAudioNames[baseAudio]} (Original - Processed version not available)`;
+        audioPlayer.removeEventListener('error', handleError);
+        audioPlayer.load();
+      });
       
       audioPlayer.load();
       
