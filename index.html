@@ -186,7 +186,7 @@
         <div class="content has-text-justified">
           <!-- ★★ 摘要原文保留 ★★ -->
           <p>
-            Large Language Models (LLMs) demonstrate impressive zero-shot performance across a wide range of natural language processing tasks. Integrating various modality encoders further expands their capabilities, giving rise to Multimodal Large Language Models (MLLMs) that process not only text but also visual and auditory modality inputs. However, these advanced capabilities may also pose significant security risks, as models can be exploited to generate harmful or inappropriate content through jailbreak attacks. While prior work has extensively explored how manipulating textual or visual modality inputs can circumvent safeguards in LLMs and MLLMs, the vulnerability of audio-specific Jailbreak on Large Audio-Language Models (LALMs) remains largely underexplored. To address this gap, we introduce \textbf{Jailbreak-AudioBench}, which consists of the Toolbox, curated Dataset, and comprehensive Benchmark. The Toolbox supports not only text-to-audio conversion but also a range of audio editing techniques. The curated Dataset provides diverse explicit and implicit jailbreak audio examples in both original and edited forms. Utilizing this dataset, we evaluate multiple state-of-the-art LALMs, establishing the most comprehensive audio jailbreak benchmark to date. Finally, Jailbreak-AudioBench establishes a foundation for advancing future research on LALMs safety alignment by enabling the in-depth exposure of more powerful jailbreak threats, such as query-based audio editing, and by facilitating the development of effective defense mechanisms.
+            Large Language Models (LLMs) demonstrate impressive zero-shot performance across a wide range of natural language processing tasks. Integrating various modality encoders further expands their capabilities, giving rise to Multimodal Large Language Models (MLLMs) that process not only text but also visual and auditory modality inputs. However, these advanced capabilities may also pose significant security risks, as models can be exploited to generate harmful or inappropriate content through jailbreak attacks. While prior work has extensively explored how manipulating textual or visual modality inputs can circumvent safeguards in LLMs and MLLMs, the vulnerability of audio-specific Jailbreak on Large Audio-Language Models (LALMs) remains largely underexplored. To address this gap, we introduce Jailbreak-AudioBench, which consists of the Toolbox, curated Dataset, and comprehensive Benchmark. The Toolbox supports not only text-to-audio conversion but also a range of audio editing techniques. The curated Dataset provides diverse explicit and implicit jailbreak audio examples in both original and edited forms. Utilizing this dataset, we evaluate multiple state-of-the-art LALMs, establishing the most comprehensive audio jailbreak benchmark to date. Finally, Jailbreak-AudioBench establishes a foundation for advancing future research on LALMs safety alignment by enabling the in-depth exposure of more powerful jailbreak threats, such as query-based audio editing, and by facilitating the development of effective defense mechanisms.
           </p>
           <img src="static/images/framework.png" alt="Framework Overview" class="framework-img">
         </div>
@@ -225,8 +225,8 @@
             Jailbreak-AudioBench collects <b>4,700</b> base harmful queries from four text-modal jailbreak sets 
             (AdvBench, MM-SafetyBench, RedTeam-2K, Safebench) and renders them into speech via <code>gTTS</code>. 
             Each utterance is further processed by seven families of audio-specific edits (tone, speed, emphasis, 
-            intonation, background noise, celebrity accent, emotion), yielding over <b>90,000</b> audio samples 
-            covering both <em>Explicit</em> and <em>Implicit</em> subsets.
+            intonation, background noise, celebrity accent, emotion), yielding <b>94,800</b> audio samples 
+            covering both <em>Explicit</em> and <em>Implicit</em> jailbreak tasks. The dataset also includes an equal number of defended versions of these audio samples to explore defense strategies against audio editing jailbreaks and a subset for the proposed Query-based Audio Editing Jailbreak Method.
           </p>
         </div>
 
@@ -263,11 +263,11 @@
             <td>52,437</td>
           </tr>
           <tr>
-            <td>Explicit Small</td>
-            <td>262</td>
-            <td>32 types</td>
-            <td>8,384</td>
-            <td>8,646</td>
+            <td>Implicit Subtype</td>
+            <td>2,203</td>
+            <td>20 types</td>
+            <td>44,060</td>
+            <td>46,263</td>
           </tr>
           </tbody>
         </table>
@@ -287,22 +287,22 @@
         <h2 class="title is-3">🚀 Evaluation & Analysis</h2>
         <div class="content has-text-justified">
           <p>
-            We comprehensively test <b>7</b> state-of-the-art Large Audio-Language Models (LALMs) using
+            We comprehensively evaluate <b>9</b> state-of-the-art Large Audio-Language Models (LALMs) using
             Jailbreak-AudioBench. Three key observations emerge:
           </p>
           <ul>
             <li>
-              <b>Differential model vulnerability.</b> Models exhibit vastly different levels of susceptibility to audio editing jailbreak. 
+              <b>Disparity in LALM Susceptibility to Audio Editing Jailbreak.</b> Models exhibit vastly different levels of susceptibility to audio editing jailbreak. 
               While SALMONN demonstrates high vulnerability with substantial ASR increases across multiple audio editing types, 
               SpeechGPT, Qwen2-Audio, and BLSP show remarkable resilience.
             </li>
             <li>
-              <b>Audio-specific brittleness.</b> Even seemingly innocuous edits (e.g., slight pitch shifts or background noise)
-              can drastically raise the attack success rate (ASR) in vulnerable models, revealing critical security considerations 
+              <b>Audio-specific Brittleness.</b> Even seemingly innocuous edits (e.g., slight pitch shifts or background noise)
+              can drastically raise the Attack Success Rate (ASR) in vulnerable models, revealing critical security considerations 
               in audio model design.
             </li>
             <li>
-              <b>Processing pipeline insights.</b> Our t-SNE visualization analysis reveals that vulnerability differences stem from 
+              <b>Analysis and Insights.</b> Our t-SNE visualization analysis reveals that vulnerability differences stem from 
               how models process edited audio through their transformer layers, with robust models effectively normalizing audio editing 
               variations while vulnerable models maintain distinct editing-based feature clusters.
             </li>
@@ -432,36 +432,10 @@
 <section class="hero is-small">
   <div class="hero-body">
     <div class="container">
-      <div class="subtitle has-text-centered" id="leaderboard" style="font-size:24px;">
-        🏆 LALMs Leaderboard on Jailbreak-AudioBench
-      </div>
       
-      <table class="table leaderboard-table">
-        <thead>
-        <tr>
-          <th>Model</th>
-          <th>Total ASR&nbsp;(%)</th>
-          <th>Vanilla ASR&nbsp;(%)</th>
-          <th>Edited ASR&nbsp;(%)</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr><td>BLSP</td><td>59.8</td><td>26.0</td><td>63.4</td></tr>
-        <tr><td>SpeechGPT</td><td>2.5</td><td>2.5</td><td>3.3</td></tr>
-        <tr><td>Qwen2-Audio-7B</td><td>7.9</td><td>6.4</td><td>9.0</td></tr>
-        <tr><td>SALMONN-7B</td><td>39.4</td><td>9.2</td><td>48.6</td></tr>
-        <tr><td>SALMONN-13B</td><td>48.1</td><td>14.8</td><td>58.1</td></tr>
-        <tr><td>VITA-1.5</td><td>21.7</td><td>8.1</td><td>26.4</td></tr>
-        <tr><td>MiniCPM-o-2.6</td><td>11.4</td><td>4.7</td><td>14.2</td></tr>
-        </tbody>
-      </table>
-      <h2 class="subtitle has-text-centered" style="font-size:smaller;">
-        ASR = Attack Success Rate. Vanilla ASR: unedited audio; Edited ASR: averaged over all edits.
+      <h2 class="title is-3 has-text-centered">
+        🏆 Detailed ASR Performance by Audio Editing Types
       </h2>
-      
-      <div class="subtitle has-text-centered" style="font-size:24px; margin-top: 30px;">
-        Detailed Model Performance by Edit Type
-      </div>
       
       <div class="detailed-table">
         <table>
@@ -741,7 +715,7 @@
           Jailbreak-AudioBench provides a foundation for two critical research directions:
         </p>
         
-        <h3 class="subtitle is-4">1. Query-based Black Box Attack for LALMs</h3>
+        <h3 class="subtitle is-4">1. Query-based Audio Editing Jailbreak Method for LALMs</h3>
         <p>
           Our analysis reveals that systematically combining audio editing techniques can significantly increase attack success rates. 
           For example, GPT-4o-Audio's vulnerability increases from just 0.76% to 8.40% when exposed to optimized combinations of audio edits.
@@ -767,13 +741,13 @@
 <section class="section" id="BibTeX">
   <div class="container is-max-desktop content">
     <h2 class="title">BibTeX</h2>
-    <pre><code>@misc{cheng2025jailbreakaudio,
-  title  = {Jailbreak-AudioBench: In-Depth Evaluation and Analysis of Jailbreak Threats for Large Audio Language Models},
-  author = {Cheng, Hao and Xiao, Erjia and Shao, Jing and Wang, Yichi and Yang, Le and Sheng, Chao and Torr, Philip and Gu, Jindong and Xu, Renjing},
-  year   = {2025},
-  eprint = {TODO_arXivID},
-  archivePrefix = {arXiv},
-  primaryClass  = {cs.CL}
+    <pre><code>@misc{cheng2025jailbreakaudiobenchindepthevaluationanalysis,
+      title={Jailbreak-AudioBench: In-Depth Evaluation and Analysis of Jailbreak Threats for Large Audio Language Models}, 
+      author={Hao Cheng, Erjia Xiao, Jing Shao, Yichi Wang, Le Yang, Chao Sheng, Philip Torr, Jindong Gu, Renjing Xu},
+      year={2025},
+      eprint={2501.13772},
+      archivePrefix={arXiv},
+      url={https://arxiv.org/abs/2501.13772}, 
 }</code></pre>
   </div>
 </section>
