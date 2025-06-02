@@ -569,9 +569,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const processingType = processingTypeSelect.value;
     const options = parameterOptions[processingType] || {};
     
-    console.log('Processing type:', processingType); // Debug log
-    console.log('Available options:', options); // Debug log
-    
     // Clear existing options
     specificParameterSelect.innerHTML = '';
     
@@ -587,8 +584,6 @@ document.addEventListener('DOMContentLoaded', function() {
     if (specificParameterSelect.options.length > 0) {
       specificParameterSelect.selectedIndex = 0;
     }
-    
-    console.log('Parameters updated, total options:', specificParameterSelect.options.length); // Debug log
   }
   
   function updateSelectionSummary() {
@@ -615,13 +610,11 @@ document.addEventListener('DOMContentLoaded', function() {
       audioPath = `static/audio/audio_001/audio_001.wav`;
       description = `${queryNames[baseQuery]} (Original)`;
     } else {
-      // Play processed version - using correct relative paths
+      // Play processed version - using correct paths
       audioPath = `static/audio/audio_001/audio_001_${parameter}.wav`;
       const paramName = specificParameterSelect.options[specificParameterSelect.selectedIndex].textContent;
       description = `${queryNames[baseQuery]} (${paramName})`;
     }
-    
-    console.log('Loading audio from:', audioPath); // Debug log
     
     audioSource.src = audioPath;
     audioDesc.textContent = description;
