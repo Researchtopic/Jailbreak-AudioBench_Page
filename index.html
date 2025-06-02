@@ -230,50 +230,88 @@
           </p>
         </div>
 
-        <table class="table is-narrow is-hoverable is-fullwidth">
+        <!-- Main Dataset Table -->
+        <h3 class="subtitle is-5 has-text-centered">The scale of Jailbreak-AudioBench Dataset</h3>
+        <table class="table is-narrow is-hoverable is-fullwidth" style="margin-bottom: 2rem;">
           <thead>
           <tr>
             <th>Subset</th>
-            <th>Base Audios</th>
-            <th>Editing Types</th>
-            <th>Edited Audios</th>
-            <th>Total</th>
+            <th>Base Audio</th>
+            <th>Types of Editing Categories</th>
+            <th>Editing Sum</th>
+            <th>Total Sum</th>
           </tr>
           </thead>
           <tbody>
           <tr>
             <td>Explicit Subtype</td>
             <td>2,497</td>
-            <td>20 types</td>
+            <td rowspan="3" style="vertical-align: middle; font-size: 0.9em;">
+              4×Tone + 3×Intonation + 2×Speed + 3×Emphasis + 3×Background Noise + 3×Celebrity Accent + 2×Emotion = 20 categories
+            </td>
             <td>49,940</td>
             <td>52,437</td>
           </tr>
           <tr>
             <td>Implicit Subtype</td>
             <td>2,203</td>
-            <td>20 types</td>
             <td>44,060</td>
             <td>46,263</td>
           </tr>
           <tr>
             <td>Explicit Defense</td>
             <td>2,497</td>
-            <td>20 types</td>
             <td>49,940</td>
             <td>52,437</td>
           </tr>
           <tr>
-            <td>Implicit Subtype</td>
+            <td>Explicit Small</td>
+            <td>262</td>
+            <td style="font-size: 0.9em;">
+              2×Speed × 2×Emphasis × 2×Background Noise × (2×Celebrity Accent + 2×Emotion) = 32 categories
+            </td>
+            <td>8,384</td>
+            <td>8,646</td>
+          </tr>
+          </tbody>
+        </table>
+
+        <!-- Plus Version Dataset Table -->
+        <h3 class="subtitle is-5 has-text-centered">Additional datasets in the Plus version of Jailbreak-AudioBench</h3>
+        <table class="table is-narrow is-hoverable is-fullwidth" style="margin-bottom: 2rem;">
+          <thead>
+          <tr>
+            <th>Subset</th>
+            <th>Base Audio</th>
+            <th>Types of Editing Categories</th>
+            <th>Editing Sum</th>
+            <th>Total Sum</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr>
+            <td>Explicit Small (GPT-4o Eval)</td>
+            <td>262</td>
+            <td rowspan="3" style="vertical-align: middle; font-size: 0.9em;">
+              4×Tone + 3×Intonation + 2×Speed + 3×Emphasis + 3×Background Noise + 3×Celebrity Accent + 2×Emotion = 20 categories
+            </td>
+            <td>5,240</td>
+            <td>5,502</td>
+          </tr>
+          <tr>
+            <td>Implicit Small (GPT-4o Eval)</td>
+            <td>237</td>
+            <td>4,740</td>
+            <td>4,977</td>
+          </tr>
+          <tr>
+            <td>Implicit Defense</td>
             <td>2,203</td>
-            <td>20 types</td>
             <td>44,060</td>
             <td>46,263</td>
           </tr>
           </tbody>
         </table>
-        <h2 class="subtitle has-text-centered" style="font-size:smaller;">
-          "Editing Types" = 4 Tone × 3 Intonation × 2 Speed × 3 Emphasis × 3 Noise × 3 Accent × 2 Emotion
-        </h2>
       </div>
     </div>
   </div>
