@@ -442,7 +442,7 @@
             <h4 class="subtitle is-5">Audio Result</h4>
             <div id="audio-player-container" class="has-text-centered">
               <audio id="audio-player" controls style="width: 100%; max-width: 500px;">
-                <source src="/audio_001/audio_001.wav" type="audio/wav" id="audio-source">
+                <source src="static/audio/audio_001/audio_001.wav" type="audio/wav" id="audio-source">
                 Your browser does not support the audio element.
               </audio>
             </div>
@@ -612,11 +612,11 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (processingType === 'original' || parameter === 'none') {
       // Play original
-      audioPath = `/audio_001/audio_001.wav`;
+      audioPath = `static/audio/audio_001/audio_001.wav`;
       description = `${queryNames[baseQuery]} (Original)`;
     } else {
-      // Play processed version - using absolute paths
-      audioPath = `/audio_001/audio_001_${parameter}.wav`;
+      // Play processed version - using correct relative paths
+      audioPath = `static/audio/audio_001/audio_001_${parameter}.wav`;
       const paramName = specificParameterSelect.options[specificParameterSelect.selectedIndex].textContent;
       description = `${queryNames[baseQuery]} (${paramName})`;
     }
@@ -629,7 +629,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Handle file not found
     audioPlayer.addEventListener('error', function handleError() {
       showMessage(`Audio file not found: ${audioPath}. Using original audio.`, 'is-warning');
-      audioSource.src = `/audio_001/audio_001.wav`;
+      audioSource.src = `static/audio/audio_001/audio_001.wav`;
       audioDesc.textContent = `${queryNames[baseQuery]} (Original - Processed version not available)`;
       audioPlayer.removeEventListener('error', handleError);
       audioPlayer.load();
