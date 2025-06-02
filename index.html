@@ -507,7 +507,7 @@
                 
                 <!-- 自定义控件 -->
                 <div class="audio-controls">
-                  <div style="display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 15px;">
+                  <div style="display: flex; align-items: center; justify-content: center; gap: 15px;">
                     <button id="play-pause-btn" class="button is-primary is-rounded">
                       <span class="icon">
                         <i class="fas fa-play" id="play-icon"></i>
@@ -522,40 +522,13 @@
                     </div>
                     
                     <span id="duration">0:00</span>
-                  </div>
-                  
-                  <!-- 下载和播放速度控件 -->
-                  <div style="display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 0.9em;">
+                    
                     <button id="download-btn" class="button is-small is-outlined">
                       <span class="icon">
                         <i class="fas fa-download"></i>
                       </span>
                       <span>Download</span>
                     </button>
-                    
-                    <div class="dropdown" id="speed-dropdown">
-                      <div class="dropdown-trigger">
-                        <button class="button is-small is-outlined" aria-haspopup="true" aria-controls="speed-menu">
-                          <span class="icon">
-                            <i class="fas fa-tachometer-alt"></i>
-                          </span>
-                          <span>Playback Speed</span>
-                          <span class="icon is-small">
-                            <i class="fas fa-angle-down" aria-hidden="true"></i>
-                          </span>
-                        </button>
-                      </div>
-                      <div class="dropdown-menu" id="speed-menu" role="menu">
-                        <div class="dropdown-content">
-                          <a href="#" class="dropdown-item speed-option" data-speed="0.5">0.5x</a>
-                          <a href="#" class="dropdown-item speed-option" data-speed="0.75">0.75x</a>
-                          <a href="#" class="dropdown-item speed-option is-active" data-speed="1">1x (Normal)</a>
-                          <a href="#" class="dropdown-item speed-option" data-speed="1.25">1.25x</a>
-                          <a href="#" class="dropdown-item speed-option" data-speed="1.5">1.5x</a>
-                          <a href="#" class="dropdown-item speed-option" data-speed="2">2x</a>
-                        </div>
-                      </div>
-                    </div>
                   </div>
                 </div>
               </div>
@@ -602,8 +575,6 @@ document.addEventListener('DOMContentLoaded', function() {
   const currentTimeSpan = document.getElementById('current-time');
   const durationSpan = document.getElementById('duration');
   const downloadBtn = document.getElementById('download-btn');
-  const speedDropdown = document.getElementById('speed-dropdown');
-  const speedOptions = document.querySelectorAll('.speed-option');
 
   // 最简单的音频文件映射 - 硬编码所有路径
   function getAudioPath(baseQuery, processingType, parameter) {
@@ -840,9 +811,13 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
   audioPlayer.addEventListener('ended', function() {
-    playIcon.className = 'fas fa-play';
-    progressBar.value = 0;
-    currentTimeSpan.textContent = '0:00';
+  });
+
+  audioPlayer.addEventListener('play', function() {
+    playIcon.className = 'fas fa-pause';
+  });
+
+  audioPlayer.addEventListener('pause', function() {
   });
 
   // 进度条控制
@@ -859,33 +834,7 @@ document.addEventListener('DOMContentLoaded', function() {
     link.click();
     document.body.removeChild(link);
   });
-
-  // 播放速度下拉菜单
-  speedDropdown.querySelector('.dropdown-trigger button').addEventListener('click', function(e) {
-    e.preventDefault();
-    speedDropdown.classList.toggle('is-active');
-  });
-
-  // 播放速度选项
-  speedOptions.forEach(option => {
-    option.addEventListener('click', function(e) {
-      e.preventDefault();
-      const speed = parseFloat(this.dataset.speed);
-      audioPlayer.playbackRate = speed;
-      
-      // 更新活动状态
-      speedOptions.forEach(opt => opt.classList.remove('is-active'));
-      this.classList.add('is-active');
-      
-      // 关闭下拉菜单
-      speedDropdown.classList.remove('is-active');
-    });
-  });
-
-  // 点击外部关闭下拉菜单
   document.addEventListener('click', function(e) {
-    if (!speedDropdown.contains(e.target)) {
-      speedDropdown.classList.remove('is-active');
     }
   });
 
