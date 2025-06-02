@@ -729,6 +729,7 @@
 </section>
 
 <!-- ============ APPLICATIONS ============ -->
+<!-- ============ APPLICATIONS ============ -->
 <section class="hero is-light is-small">
   <div class="hero-body">
     <div class="container is-max-desktop">
@@ -744,6 +745,31 @@
           For example, GPT-4o-Audio's vulnerability increases from just 0.76% to 8.40% when exposed to optimized combinations of audio edits.
           This demonstrates that even commercial-grade models remain susceptible to carefully crafted audio manipulations.
         </p>
+        
+        <!-- Query-based Audio Editing Jailbreak Results -->
+        <div class="has-text-centered" style="margin: 30px 0;">
+          <img src="static/images/grid_search_heatmap_1.png" alt="Query-based Audio Editing Jailbreak Results - Part 1" 
+               style="max-width:100%; margin-bottom:15px; border: 1px solid #ddd; border-radius: 8px;">
+          <p class="is-size-6 has-text-grey-dark" style="margin-top: 10px; font-style: italic;">
+            <strong>Figure:</strong> ASR Performance of the Query-based Audio Editing Jailbreak method on models including 
+            Qwen2-Audio-7B, SALMONN-7B, and GPT-4o-Audio. In each panel, columns represent individual audio samples, 
+            and the first 32 rows represent different edited variants of these samples. The penultimate row represents 
+            the original unedited audio sample, while the bottom row indicates whether any of the 32 variant queries 
+            bypassed the model's defenses. <span style="color: #28a745;">Green: failed jailbreak</span>; 
+            <span style="color: #dc3545;">Red: successful jailbreaks</span>.
+          </p>
+        </div>
+        
+        <div class="has-text-centered" style="margin: 30px 0;">
+          <img src="static/images/grid_search_heatmap_more_models.png" alt="Query-based Audio Editing Jailbreak Results - Part 2" 
+               style="max-width:100%; margin-bottom:15px; border: 1px solid #ddd; border-radius: 8px;">
+          <p class="is-size-6 has-text-grey-dark" style="margin-top: 10px; font-style: italic;">
+            <strong>Figure:</strong> ASR Performance of the Query-based Audio Editing Jailbreak method on models including 
+            BLSP, SpeechGPT, VITA-1.5, and MiniCPM-o-2.6. The visualization format follows the same convention as above, 
+            demonstrating varying levels of vulnerability across different model architectures when exposed to systematically 
+            optimized audio editing combinations.
+          </p>
+        </div>
         
         <h3 class="subtitle is-4">2. Development of Defense Methods</h3>
         <p>
