@@ -811,13 +811,9 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
   audioPlayer.addEventListener('ended', function() {
-  });
-
-  audioPlayer.addEventListener('play', function() {
-    playIcon.className = 'fas fa-pause';
-  });
-
-  audioPlayer.addEventListener('pause', function() {
+    playIcon.className = 'fas fa-play';
+    progressBar.value = 0;
+    currentTimeSpan.textContent = '0:00';
   });
 
   // 进度条控制
@@ -833,9 +829,6 @@ document.addEventListener('DOMContentLoaded', function() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-  });
-  document.addEventListener('click', function(e) {
-    }
   });
 
   // 绑定原有事件
