@@ -469,7 +469,7 @@
   </div>
 </section>
 
-<!-- 修复后的交互式音频处理演示部分 -->
+<!-- 完全使用绝对路径的交互式音频处理演示 -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
   // Initialize variables
@@ -483,43 +483,82 @@ document.addEventListener('DOMContentLoaded', function() {
   const processingStatus = document.getElementById('processing-status');
   const selectionSummary = document.getElementById('selection-summary');
   
-  // Parameter options for each processing type (matching actual file names)
+  // 每个文件对应的完整绝对路径
+  const audioFiles = {
+    // Original
+    'original_none': 'static/audio/audio_001/audio_001.wav',
+    
+    // Celebrity Accent
+    'accent_trump': 'static/audio/audio_001/audio_001_white.wav',
+    'accent_kanye': 'static/audio/audio_001/audio_001_black.wav',
+    'accent_lucy': 'static/audio/audio_001/audio_001_yellow.wav',
+    
+    // Speed
+    'speed_slow': 'static/audio/audio_001/audio_001_speedx0.5.wav',
+    'speed_fast': 'static/audio/audio_001/audio_001_speedx1.5.wav',
+    
+    // Tone
+    'tone_minus8': 'static/audio/audio_001/audio_001_tone-8st.wav',
+    'tone_minus4': 'static/audio/audio_001/audio_001_tone-4st.wav',
+    'tone_plus4': 'static/audio/audio_001/audio_001_tone+4st.wav',
+    'tone_plus8': 'static/audio/audio_001/audio_001_tone+8st.wav',
+    
+    // Emphasis
+    'emphasis_2': 'static/audio/audio_001/audio_001_emphasis_x2.wav',
+    'emphasis_5': 'static/audio/audio_001/audio_001_emphasis_x5.wav',
+    'emphasis_10': 'static/audio/audio_001/audio_001_emphasis_x10.wav',
+    
+    // Intonation
+    'intonation_0246': 'static/audio/audio_001/audio_001_intonation_0246.wav',
+    'intonation_0369': 'static/audio/audio_001/audio_001_intonation_0369.wav',
+    'intonation_04812': 'static/audio/audio_001/audio_001_intonation_04812.wav',
+    
+    // Background Noise
+    'background_crowd': 'static/audio/audio_001/audio_001_noise_crowd.wav',
+    'background_white': 'static/audio/audio_001/audio_001_white_noise.wav',
+    
+    // Emotion
+    'emotion_laugh': 'static/audio/audio_001/audio_001_emotion_laughs.wav',
+    'emotion_scream': 'static/audio/audio_001/audio_001_emotion_screams.wav'
+  };
+  
+  // Parameter options for each processing type
   const parameterOptions = {
     original: {
-      'none': 'No processing applied'
+      'original_none': 'No processing applied'
     },
     accent: {
-      'white': 'Donald Trump Accent',
-      'black': 'Kanye West Accent', 
-      'yellow': 'Lucy Liu Accent'
+      'accent_trump': 'Donald Trump Accent',
+      'accent_kanye': 'Kanye West Accent',
+      'accent_lucy': 'Lucy Liu Accent'
     },
     speed: {
-      'speedx0.5': 'Speed x 0.5 (Slower)',
-      'speedx1.5': 'Speed x 1.5 (Faster)'
+      'speed_slow': 'Speed x 0.5 (Slower)',
+      'speed_fast': 'Speed x 1.5 (Faster)'
     },
     tone: {
-      'tone-8st': 'Semitone -8 (Lower pitch)',
-      'tone-4st': 'Semitone -4 (Lower pitch)',
-      'tone+4st': 'Semitone +4 (Higher pitch)',
-      'tone+8st': 'Semitone +8 (Much higher pitch)'
+      'tone_minus8': 'Semitone -8 (Lower pitch)',
+      'tone_minus4': 'Semitone -4 (Lower pitch)',
+      'tone_plus4': 'Semitone +4 (Higher pitch)',
+      'tone_plus8': 'Semitone +8 (Much higher pitch)'
     },
     emphasis: {
-      'emphasis_x2': 'Volume x 2',
-      'emphasis_x5': 'Volume x 5',
-      'emphasis_x10': 'Volume x 10'
+      'emphasis_2': 'Volume x 2',
+      'emphasis_5': 'Volume x 5',
+      'emphasis_10': 'Volume x 10'
     },
     intonation: {
-      'intonation_0246': 'Interval Pattern 0246',
-      'intonation_0369': 'Interval Pattern 0369',
-      'intonation_04812': 'Interval Pattern 04812'
+      'intonation_0246': 'Interval +2',
+      'intonation_0369': 'Interval +3',
+      'intonation_04812': 'Interval +4'
     },
     background: {
-      'noise_crowd': 'Crowd Noise',
-      'white_noise': 'White Noise'
+      'background_crowd': 'Crowd Noise',
+      'background_white': 'White Noise'
     },
     emotion: {
-      'emotion_laughs': 'Laugh Effect',
-      'emotion_screams': 'Scream Effect'
+      'emotion_laugh': 'Laugh Effect',
+      'emotion_scream': 'Scream Effect'
     }
   };
   
@@ -600,43 +639,35 @@ document.addEventListener('DOMContentLoaded', function() {
   
   function applyAudioEffect() {
     const baseQuery = baseQuerySelect.value;
-    const processingType = processingTypeSelect.value;
     const parameter = specificParameterSelect.value;
     
-    let audioPath;
-    let description;
+    // 直接获取对应的音频文件路径
+    const audioPath = audioFiles[parameter];
     
-    if (processingType === 'original' || parameter === 'none') {
-      // Play original
-      audioPath = `static/audio/audio_001/audio_001.wav`;
-      description = `${queryNames[baseQuery]} (Original)`;
-    } else {
-      // Play processed version - using correct paths
-      audioPath = `static/audio/audio_001/audio_001_${parameter}.wav`;
+    if (audioPath) {
+      audioSource.src = audioPath;
       const paramName = specificParameterSelect.options[specificParameterSelect.selectedIndex].textContent;
-      description = `${queryNames[baseQuery]} (${paramName})`;
-    }
-    
-    audioSource.src = audioPath;
-    audioDesc.textContent = description;
-    
-    // Handle file not found with one-time error handler
-    audioPlayer.onerror = function() {
-      showMessage(`Audio file not found: ${audioPath}. Using original audio.`, 'is-warning');
-      audioSource.src = `static/audio/audio_001/audio_001.wav`;
-      audioDesc.textContent = `${queryNames[baseQuery]} (Original - Processed version not available)`;
-      audioPlayer.onerror = null; // Remove error handler
+      audioDesc.textContent = `${queryNames[baseQuery]} (${paramName})`;
+      
+      // Handle file not found
+      audioPlayer.onerror = function() {
+        showMessage(`Audio file not found: ${audioPath}`, 'is-warning');
+        // 回退到原始音频
+        audioSource.src = 'static/audio/audio_001/audio_001.wav';
+        audioDesc.textContent = `${queryNames[baseQuery]} (Original - Processed version not available)`;
+        audioPlayer.onerror = null;
+        audioPlayer.load();
+      };
+      
       audioPlayer.load();
-    };
-    
-    audioPlayer.load();
-    
-    // Auto play
-    audioPlayer.play().catch(e => {
-      console.log('Autoplay prevented by browser');
-    });
-    
-    showMessage('Audio loaded successfully!', 'is-success');
+      
+      // Auto play
+      audioPlayer.play().catch(e => {
+        console.log('Autoplay prevented by browser');
+      });
+      
+      showMessage('Audio loaded successfully!', 'is-success');
+    }
   }
   
   function showProcessingStatus() {
