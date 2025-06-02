@@ -432,14 +432,92 @@
             </div>
           </div>
           
-          <!-- Audio Player -->
+          <!-- Custom Audio Player -->
           <div class="mt-5">
             <h4 class="subtitle is-5">Audio Result</h4>
             <div id="audio-player-container" class="has-text-centered">
-              <audio id="audio-player" controls style="width: 100%; max-width: 500px;">
+              <!-- Hidden audio element -->
+              <audio id="audio-player" preload="auto" style="display: none;">
                 <source src="static/audio/audio_001/audio_001.wav" type="audio/wav" id="audio-source">
                 Your browser does not support the audio element.
               </audio>
+              
+              <!-- Custom Audio Controls -->
+              <div class="box" style="max-width: 500px; margin: 0 auto; padding: 20px;">
+                <div class="level is-mobile" style="margin-bottom: 15px;">
+                  <div class="level-left">
+                    <div class="level-item">
+                      <button id="play-pause-btn" class="button is-primary is-large">
+                        <span class="icon">
+                          <i class="fas fa-play"></i>
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="level-right">
+                    <div class="level-item">
+                      <div class="dropdown" id="audio-menu">
+                        <div class="dropdown-trigger">
+                          <button class="button" aria-haspopup="true" aria-controls="dropdown-menu">
+                            <span class="icon">
+                              <i class="fas fa-ellipsis-v"></i>
+                            </span>
+                          </button>
+                        </div>
+                        <div class="dropdown-menu" id="dropdown-menu" role="menu">
+                          <div class="dropdown-content">
+                            <a href="#" class="dropdown-item" id="download-audio">
+                              <span class="icon">
+                                <i class="fas fa-download"></i>
+                              </span>
+                              <span>Download</span>
+                            </a>
+                            <hr class="dropdown-divider">
+                            <div class="dropdown-item">
+                              <div class="field">
+                                <label class="label is-small">Playback Speed</label>
+                                <div class="control">
+                                  <div class="select is-small is-fullwidth">
+                                    <select id="playback-speed">
+                                      <option value="0.5">0.5x</option>
+                                      <option value="0.75">0.75x</option>
+                                      <option value="1" selected>1.0x</option>
+                                      <option value="1.25">1.25x</option>
+                                      <option value="1.5">1.5x</option>
+                                      <option value="2">2.0x</option>
+                                    </select>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Progress Bar -->
+                <div class="field">
+                  <div class="control">
+                    <progress id="audio-progress" class="progress is-primary" value="0" max="100" style="width: 100%;">0%</progress>
+                  </div>
+                </div>
+                
+                <!-- Time Display -->
+                <div class="level is-mobile">
+                  <div class="level-left">
+                    <div class="level-item">
+                      <small id="current-time">0:00</small>
+                    </div>
+                  </div>
+                  <div class="level-right">
+                    <div class="level-item">
+                      <small id="duration-time">0:00</small>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
             
             <!-- 当前音频信息 -->
@@ -660,21 +738,114 @@ document.addEventListener('DOMContentLoaded', function() {
     audioSource.src = audioPath;
     audioDesc.textContent = `${queryName} (${description})`;
     
+    // Reset player state
+    playPauseBtn.querySelector('i').className = 'fas fa-play';
+    audioProgress.value = 0;
+    currentTimeDisplay.textContent = '0:00';
+    durationTimeDisplay.textContent = '0:00';
+    
     audioPlayer.onerror = function() {
       console.error('Audio failed to load:', audioPath);
       // 如果失败，播放原声
       const fallbackPath = getAudioPath(baseQuery, 'original', 'none');
       audioSource.src = fallbackPath;
-      audioDesc.textContent = `${queryName} (Original - 文件加载失败)`;
+      audioDesc.textContent = `${queryName} (Original - File loading failed)`;
       audioPlayer.onerror = null;
       audioPlayer.load();
     };
     
     audioPlayer.load();
-    audioPlayer.play().catch(e => {
-      console.log('Autoplay prevented');
-    });
   }
+
+  // Custom Audio Player Controls
+  const playPauseBtn = document.getElementById('play-pause-btn');
+  const audioProgress = document.getElementById('audio-progress');
+  const currentTimeDisplay = document.getElementById('current-time');
+  const durationTimeDisplay = document.getElementById('duration-time');
+  const audioMenu = document.getElementById('audio-menu');
+  const downloadBtn = document.getElementById('download-audio');
+  const playbackSpeedSelect = document.getElementById('playback-speed');
+
+  // Format time helper
+  function formatTime(seconds) {
+    const minutes = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${minutes}:${secs.toString().padStart(2, '0')}`;
+  }
+
+  // Play/Pause functionality
+  playPauseBtn.addEventListener('click', function() {
+    if (audioPlayer.paused) {
+      audioPlayer.play();
+      playPauseBtn.querySelector('i').className = 'fas fa-pause';
+    } else {
+      audioPlayer.pause();
+      playPauseBtn.querySelector('i').className = 'fas fa-play';
+    }
+  });
+
+  // Update progress and time
+  audioPlayer.addEventListener('timeupdate', function() {
+    if (audioPlayer.duration) {
+      const progress = (audioPlayer.currentTime / audioPlayer.duration) * 100;
+      audioProgress.value = progress;
+      currentTimeDisplay.textContent = formatTime(audioPlayer.currentTime);
+    }
+  });
+
+  // Update duration when loaded
+  audioPlayer.addEventListener('loadedmetadata', function() {
+    durationTimeDisplay.textContent = formatTime(audioPlayer.duration);
+    audioProgress.value = 0;
+    currentTimeDisplay.textContent = formatTime(0);
+  });
+
+  // Seek functionality
+  audioProgress.addEventListener('click', function(e) {
+    if (audioPlayer.duration) {
+      const rect = audioProgress.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const width = rect.width;
+      const clickRatio = clickX / width;
+      audioPlayer.currentTime = clickRatio * audioPlayer.duration;
+    }
+  });
+
+  // Reset play button when audio ends
+  audioPlayer.addEventListener('ended', function() {
+    playPauseBtn.querySelector('i').className = 'fas fa-play';
+    audioProgress.value = 0;
+    currentTimeDisplay.textContent = formatTime(0);
+  });
+
+  // Dropdown menu toggle
+  audioMenu.addEventListener('click', function(e) {
+    e.stopPropagation();
+    audioMenu.classList.toggle('is-active');
+  });
+
+  // Close dropdown when clicking outside
+  document.addEventListener('click', function() {
+    audioMenu.classList.remove('is-active');
+  });
+
+  // Download functionality
+  downloadBtn.addEventListener('click', function(e) {
+    e.preventDefault();
+    const audioSrc = audioSource.src;
+    const link = document.createElement('a');
+    link.href = audioSrc;
+    link.download = audioSrc.split('/').pop();
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    audioMenu.classList.remove('is-active');
+  });
+
+  // Playback speed control
+  playbackSpeedSelect.addEventListener('change', function() {
+    audioPlayer.playbackRate = parseFloat(this.value);
+  });
 
   // 绑定事件
   processingTypeSelect.addEventListener('change', updateParameterOptions);
