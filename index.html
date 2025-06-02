@@ -655,41 +655,61 @@ function applyAudioEffect() {
   const baseQuery = baseQuerySelect.value;
   const processingType = processingTypeSelect.value;
   const parameter = specificParameterSelect.value;
-  
-  // Get audio data
-  const audioData = allAudioFiles[processingType]?.[parameter];
-  
-  if (audioData && audioData.path) {
-    console.log('Loading audio:', audioData.path);
-    
-    audioSource.src = audioData.path;
-    audioDesc.textContent = `${queryNames[baseQuery]} (${audioData.text})`;
+
+  console.log("Attempting to apply effect with:", { baseQuery, processingType, parameter });
+
+  let path_to_play = null;
+  let description_for_audio = `${queryNames[baseQuery]} (Error - Unknown selection)`; // Default error description
+
+  if (allAudioFiles.hasOwnProperty(processingType)) {
+    const typeOptions = allAudioFiles[processingType];
+    if (typeOptions.hasOwnProperty(parameter)) {
+      const audioDetails = typeOptions[parameter];
+      if (audioDetails && audioDetails.hasOwnProperty('path') && typeof audioDetails.path === 'string' && audioDetails.path.trim() !== '') {
+        path_to_play = audioDetails.path;
+        description_for_audio = `${queryNames[baseQuery]} (${audioDetails.text || parameter})`;
+      } else {
+        console.error('Audio details found, but path is missing or invalid:', audioDetails);
+      }
+    } else {
+      console.error('Parameter not found in typeOptions:', { processingType, parameter, typeOptions });
+    }
+  } else {
+    console.error('Processing type not found in allAudioFiles:', { processingType, allAudioFiles });
+  }
+
+  if (path_to_play) {
+    console.log('Loading audio:', path_to_play);
+    audioSource.src = path_to_play;
+    audioDesc.textContent = description_for_audio;
     
     // Clear previous error handler
-    audioPlayer.onerror = null;
+    audioPlayer.onerror = null; 
     
-    // Handle file not found
+    // Handle file not found or other load errors
     audioPlayer.onerror = function() {
-      console.error('Audio file not found:', audioData.path);
-      showMessage(`Audio file not found: ${audioData.path}`, 'is-warning');
-      // Fallback to original audio
-      audioSource.src = 'static/audio/audio_001/audio_001.wav';
-      audioDesc.textContent = `${queryNames[baseQuery]} (Original - Processed version not available)`;
-      audioPlayer.onerror = null;
+      console.error('Error loading audio file:', path_to_play);
+      showMessage(`错误：无法加载音频文件 ${path_to_play}。将播放原始音频。`, 'is-warning');
+      // Fallback to original audio for the current query (exploit -> audio_001)
+      audioSource.src = 'static/audio/audio_001/audio_001.wav'; 
+      audioDesc.textContent = `${queryNames[baseQuery]} (原始 - 所选编辑版本加载失败)`;
+      audioPlayer.onerror = null; // Prevent infinite loops if fallback also fails
       audioPlayer.load();
     };
     
     audioPlayer.load();
-    
-    // Try to auto play
     audioPlayer.play().catch(e => {
-      console.log('Autoplay prevented:', e);
+      console.warn('Autoplay was prevented or failed:', e);
+      // User might need to click play on the audio player itself if autoplay is blocked
     });
-    
-    showMessage('Audio loaded successfully!', 'is-success');
+    showMessage('音频已加载!', 'is-success');
   } else {
-    console.error('No audio data found for:', processingType, parameter);
-    showMessage('Configuration error: No audio path found', 'is-danger');
+    console.error('Configuration error: No valid audio path found for:', { processingType, parameter });
+    showMessage('配置错误：未找到有效的音频路径。将播放原始音频。', 'is-danger');
+    // Fallback to original audio
+    audioSource.src = 'static/audio/audio_001/audio_001.wav';
+    audioDesc.textContent = `${queryNames[baseQuery]} (原始 - 配置错误)`;
+    audioPlayer.load();
   }
 }
 
@@ -744,12 +764,9 @@ specificParameterSelect.addEventListener('change', updateSelectionSummary);
 
 applyButton.addEventListener('click', function() {
   showProcessingStatus();
-  
-  // Simulate processing delay
-  setTimeout(() => {
-    applyAudioEffect();
-    hideProcessingStatus();
-  }, 500);
+  // Removed setTimeout for direct execution
+  applyAudioEffect(); 
+  hideProcessingStatus(); // This will hide status quickly; audio loading is async
 });
 
 // Handle processing status close button
