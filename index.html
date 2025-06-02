@@ -616,26 +616,42 @@ const processingTypeNames = {
 
 // Update parameter options based on processing type
 function updateParameterOptions() {
-  const processingType = processingTypeSelect.value;
-  const options = allAudioFiles[processingType] || {};
+  const currentProcessingType = processingTypeSelect.value;
+  // console.log('[DEBUG] updateParameterOptions called for type:', currentProcessingType);
+
+  const parameterOptionsForType = allAudioFiles[currentProcessingType];
   
-  // Clear existing options
-  specificParameterSelect.innerHTML = '';
+  specificParameterSelect.innerHTML = ''; // Clear existing options
   
-  // Add new options
-  Object.entries(options).forEach(([key, data]) => {
-    const option = document.createElement('option');
-    option.value = key;
-    option.textContent = data.text;
-    specificParameterSelect.appendChild(option);
-  });
+  if (parameterOptionsForType && Object.keys(parameterOptionsForType).length > 0) {
+    // console.log('[DEBUG] Options found for type:', currentProcessingType, parameterOptionsForType);
+    Object.keys(parameterOptionsForType).forEach(key => {
+      const optionData = parameterOptionsForType[key];
+      if (optionData && typeof optionData.text === 'string') {
+        const optionElement = document.createElement('option');
+        optionElement.value = key;
+        optionElement.textContent = optionData.text;
+        specificParameterSelect.appendChild(optionElement);
+        // console.log('[DEBUG] Added option:', key, optionData.text);
+      } else {
+        // console.warn('[DEBUG] Invalid option data for key:', key, 'in type:', currentProcessingType, optionData);
+      }
+    });
+  } else {
+    // console.warn('[DEBUG] No parameter options found or empty options for type:', currentProcessingType, 'in allAudioFiles.');
+    // If no specific options, provide a default placeholder
+    const defaultOption = document.createElement('option');
+    defaultOption.value = 'none'; // or an empty string if 'none' is a valid parameter elsewhere
+    defaultOption.textContent = (currentProcessingType === 'original') ? 'No processing applied' : 'No specific parameters available';
+    specificParameterSelect.appendChild(defaultOption);
+  }
   
-  // Select first option
+  // Ensure first option is selected if list is populated
   if (specificParameterSelect.options.length > 0) {
     specificParameterSelect.selectedIndex = 0;
   }
   
-  updateSelectionSummary();
+  updateSelectionSummary(); // Update the summary text below the dropdowns
 }
 
 // Update selection summary
@@ -652,63 +668,57 @@ function updateSelectionSummary() {
 
 // Apply audio effect
 function applyAudioEffect() {
-  const baseQuery = baseQuerySelect.value;
-  const processingType = processingTypeSelect.value;
-  const parameter = specificParameterSelect.value;
+  const currentBaseQuery = baseQuerySelect.value;
+  const currentProcessingType = processingTypeSelect.value;
+  const currentParameter = specificParameterSelect.value;
 
-  console.log("Attempting to apply effect with:", { baseQuery, processingType, parameter });
+  // console.log('[DEBUG] applyAudioEffect called with:', { currentBaseQuery, currentProcessingType, currentParameter });
 
   let path_to_play = null;
-  let description_for_audio = `${queryNames[baseQuery]} (Error - Unknown selection)`; // Default error description
+  let description_for_audio = `${queryNames[currentBaseQuery]} (配置错误)`; // Default error description
 
-  if (allAudioFiles.hasOwnProperty(processingType)) {
-    const typeOptions = allAudioFiles[processingType];
-    if (typeOptions.hasOwnProperty(parameter)) {
-      const audioDetails = typeOptions[parameter];
-      if (audioDetails && audioDetails.hasOwnProperty('path') && typeof audioDetails.path === 'string' && audioDetails.path.trim() !== '') {
-        path_to_play = audioDetails.path;
-        description_for_audio = `${queryNames[baseQuery]} (${audioDetails.text || parameter})`;
-      } else {
-        console.error('Audio details found, but path is missing or invalid:', audioDetails);
-      }
-    } else {
-      console.error('Parameter not found in typeOptions:', { processingType, parameter, typeOptions });
-    }
+  // Directly try to access the path information
+  if (allAudioFiles && 
+      allAudioFiles[currentProcessingType] && 
+      allAudioFiles[currentProcessingType][currentParameter] && 
+      typeof allAudioFiles[currentProcessingType][currentParameter].path === 'string' && 
+      allAudioFiles[currentProcessingType][currentParameter].path.trim() !== '') {
+        
+      path_to_play = allAudioFiles[currentProcessingType][currentParameter].path;
+      const audioText = allAudioFiles[currentProcessingType][currentParameter].text || currentParameter;
+      description_for_audio = `${queryNames[currentBaseQuery]} (${audioText})`;
+      // console.log('[DEBUG] Path to play found:', path_to_play);
+
   } else {
-    console.error('Processing type not found in allAudioFiles:', { processingType, allAudioFiles });
+    // console.error('[DEBUG] Failed to find valid audio path. Details:');
+    // console.error('[DEBUG] Processing Type:', currentProcessingType, 'Parameter:', currentParameter);
+    // console.error('[DEBUG] Entry in allAudioFiles:', allAudioFiles[currentProcessingType] ? allAudioFiles[currentProcessingType][currentParameter] : 'Type not found');
   }
 
   if (path_to_play) {
-    console.log('Loading audio:', path_to_play);
+    // console.log('Loading audio:', path_to_play);
     audioSource.src = path_to_play;
     audioDesc.textContent = description_for_audio;
     
-    // Clear previous error handler
-    audioPlayer.onerror = null; 
-    
-    // Handle file not found or other load errors
+    audioPlayer.onerror = null; // Clear previous error handler 
     audioPlayer.onerror = function() {
-      console.error('Error loading audio file:', path_to_play);
-      showMessage(`错误：无法加载音频文件 ${path_to_play}。将播放原始音频。`, 'is-warning');
-      // Fallback to original audio for the current query (exploit -> audio_001)
+      // console.error('Error loading audio file from path:', path_to_play);
+      showMessage(`错误：无法加载音频文件 ${path_to_play}。将播放原始音频（audio_001）。`, 'is-warning');
       audioSource.src = 'static/audio/audio_001/audio_001.wav'; 
-      audioDesc.textContent = `${queryNames[baseQuery]} (原始 - 所选编辑版本加载失败)`;
-      audioPlayer.onerror = null; // Prevent infinite loops if fallback also fails
+      audioDesc.textContent = `${queryNames[currentBaseQuery]} (原始 - 加载失败: ${currentProcessingType}/${currentParameter})`;
+      audioPlayer.onerror = null; 
       audioPlayer.load();
     };
     
     audioPlayer.load();
     audioPlayer.play().catch(e => {
-      console.warn('Autoplay was prevented or failed:', e);
-      // User might need to click play on the audio player itself if autoplay is blocked
+      // console.warn('Autoplay was prevented or failed:', e);
     });
-    showMessage('音频已加载!', 'is-success');
+    showMessage('音频已加载: ' + description_for_audio, 'is-success');
   } else {
-    console.error('Configuration error: No valid audio path found for:', { processingType, parameter });
-    showMessage('配置错误：未找到有效的音频路径。将播放原始音频。', 'is-danger');
-    // Fallback to original audio
+    showMessage('配置错误：未找到有效的音频路径。将播放原始音频（audio_001）。', 'is-danger');
     audioSource.src = 'static/audio/audio_001/audio_001.wav';
-    audioDesc.textContent = `${queryNames[baseQuery]} (原始 - 配置错误)`;
+    audioDesc.textContent = `${queryNames[currentBaseQuery]} (原始 - 配置错误: ${currentProcessingType}/${currentParameter})`;
     audioPlayer.load();
   }
 }
