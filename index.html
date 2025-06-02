@@ -470,326 +470,195 @@
 </section>
 
 <script>
-// 移除之前的事件监听器（如果存在）
-// if (window.audioProcessingInitialized) {
-//   location.reload(); // 重新加载页面以清理旧的事件监听器
-// }
-// window.audioProcessingInitialized = true;
+// 最简单直接的音频处理脚本
+document.addEventListener('DOMContentLoaded', function() {
+  const baseQuerySelect = document.getElementById('base-query');
+  const processingTypeSelect = document.getElementById('processing-type');
+  const specificParameterSelect = document.getElementById('specific-parameter');
+  const applyButton = document.getElementById('apply-button');
+  const audioPlayer = document.getElementById('audio-player');
+  const audioSource = document.getElementById('audio-source');
+  const audioDesc = document.getElementById('audio-desc');
+  const selectionSummary = document.getElementById('selection-summary');
 
-// Initialize variables
-const baseQuerySelect = document.getElementById('base-query');
-const processingTypeSelect = document.getElementById('processing-type');
-const specificParameterSelect = document.getElementById('specific-parameter');
-const applyButton = document.getElementById('apply-button');
-const audioPlayer = document.getElementById('audio-player');
-const audioSource = document.getElementById('audio-source');
-const audioDesc = document.getElementById('audio-desc');
-const processingStatus = document.getElementById('processing-status');
-const selectionSummary = document.getElementById('selection-summary');
-
-// 所有音频文件的完整映射
-const allAudioFiles = {
-  // Original
-  'original': {
-    'none': {
-      text: 'No processing applied',
-      path: 'static/audio/audio_001/audio_001.wav'
+  // 最简单的音频文件映射 - 硬编码所有路径
+  function getAudioPath(processingType, parameter) {
+    if (processingType === 'original') {
+      return 'static/audio/audio_001/audio_001.wav';
     }
-  },
-  // Celebrity Accent
-  'accent': {
-    'trump': {
-      text: 'Donald Trump Accent',
-      path: 'static/audio/audio_001/audio_001_white.wav'
-    },
-    'kanye': {
-      text: 'Kanye West Accent', 
-      path: 'static/audio/audio_001/audio_001_black.wav'
-    },
-    'lucy': {
-      text: 'Lucy Liu Accent',
-      path: 'static/audio/audio_001/audio_001_yellow.wav'
+    if (processingType === 'accent') {
+      if (parameter === 'trump') return 'static/audio/audio_001/audio_001_white.wav';
+      if (parameter === 'kanye') return 'static/audio/audio_001/audio_001_black.wav';
+      if (parameter === 'lucy') return 'static/audio/audio_001/audio_001_yellow.wav';
     }
-  },
-  // Speed
-  'speed': {
-    'slow': {
-      text: 'Speed x 0.5 (Slower)',
-      path: 'static/audio/audio_001/audio_001_speedx0.5.wav'
-    },
-    'fast': {
-      text: 'Speed x 1.5 (Faster)',
-      path: 'static/audio/audio_001/audio_001_speedx1.5.wav'
+    if (processingType === 'speed') {
+      if (parameter === 'slow') return 'static/audio/audio_001/audio_001_speedx0.5.wav';
+      if (parameter === 'fast') return 'static/audio/audio_001/audio_001_speedx1.5.wav';
     }
-  },
-  // Tone
-  'tone': {
-    'minus8': {
-      text: 'Semitone -8 (Lower pitch)',
-      path: 'static/audio/audio_001/audio_001_tone-8st.wav'
-    },
-    'minus4': {
-      text: 'Semitone -4 (Lower pitch)',
-      path: 'static/audio/audio_001/audio_001_tone-4st.wav'
-    },
-    'plus4': {
-      text: 'Semitone +4 (Higher pitch)',
-      path: 'static/audio/audio_001/audio_001_tone+4st.wav'
-    },
-    'plus8': {
-      text: 'Semitone +8 (Much higher pitch)',
-      path: 'static/audio/audio_001/audio_001_tone+8st.wav'
+    if (processingType === 'tone') {
+      if (parameter === 'minus8') return 'static/audio/audio_001/audio_001_tone-8st.wav';
+      if (parameter === 'minus4') return 'static/audio/audio_001/audio_001_tone-4st.wav';
+      if (parameter === 'plus4') return 'static/audio/audio_001/audio_001_tone+4st.wav';
+      if (parameter === 'plus8') return 'static/audio/audio_001/audio_001_tone+8st.wav';
     }
-  },
-  // Emphasis
-  'emphasis': {
-    'vol2': {
-      text: 'Volume x 2',
-      path: 'static/audio/audio_001/audio_001_emphasis_x2.wav'
-    },
-    'vol5': {
-      text: 'Volume x 5',
-      path: 'static/audio/audio_001/audio_001_emphasis_x5.wav'
-    },
-    'vol10': {
-      text: 'Volume x 10',
-      path: 'static/audio/audio_001/audio_001_emphasis_x10.wav'
+    if (processingType === 'emphasis') {
+      if (parameter === 'vol2') return 'static/audio/audio_001/audio_001_emphasis_x2.wav';
+      if (parameter === 'vol5') return 'static/audio/audio_001/audio_001_emphasis_x5.wav';
+      if (parameter === 'vol10') return 'static/audio/audio_001/audio_001_emphasis_x10.wav';
     }
-  },
-  // Intonation
-  'intonation': {
-    'int2': {
-      text: 'Interval +2',
-      path: 'static/audio/audio_001/audio_001_intonation_0246.wav'
-    },
-    'int3': {
-      text: 'Interval +3',
-      path: 'static/audio/audio_001/audio_001_intonation_0369.wav'
-    },
-    'int4': {
-      text: 'Interval +4',
-      path: 'static/audio/audio_001/audio_001_intonation_04812.wav'
+    if (processingType === 'intonation') {
+      if (parameter === 'int2') return 'static/audio/audio_001/audio_001_intonation_0246.wav';
+      if (parameter === 'int3') return 'static/audio/audio_001/audio_001_intonation_0369.wav';
+      if (parameter === 'int4') return 'static/audio/audio_001/audio_001_intonation_04812.wav';
     }
-  },
-  // Background
-  'background': {
-    'crowd': {
-      text: 'Crowd Noise',
-      path: 'static/audio/audio_001/audio_001_noise_crowd.wav'
-    },
-    'white': {
-      text: 'White Noise',
-      path: 'static/audio/audio_001/audio_001_white_noise.wav'
+    if (processingType === 'background') {
+      if (parameter === 'crowd') return 'static/audio/audio_001/audio_001_noise_crowd.wav';
+      if (parameter === 'white') return 'static/audio/audio_001/audio_001_white_noise.wav';
     }
-  },
-  // Emotion
-  'emotion': {
-    'laugh': {
-      text: 'Laugh Effect',
-      path: 'static/audio/audio_001/audio_001_emotion_laughs.wav'
-    },
-    'scream': {
-      text: 'Scream Effect',
-      path: 'static/audio/audio_001/audio_001_emotion_screams.wav'
+    if (processingType === 'emotion') {
+      if (parameter === 'laugh') return 'static/audio/audio_001/audio_001_emotion_laughs.wav';
+      if (parameter === 'scream') return 'static/audio/audio_001/audio_001_emotion_screams.wav';
     }
-  }
-};
-
-// Query names
-const queryNames = {
-  'exploit': 'Exploit Script',
-  'hacking': 'Database Hacking',
-  'firearms': 'Firearms Access'
-};
-
-// Processing type names
-const processingTypeNames = {
-  'original': 'Original',
-  'accent': 'Celebrity Accent',
-  'speed': 'Speed Adjustment', 
-  'tone': 'Tone/Pitch Shift',
-  'emphasis': 'Volume Emphasis',
-  'intonation': 'Intonation Pattern',
-  'background': 'Background Noise',
-  'emotion': 'Emotion Effect'
-};
-
-// Update parameter options based on processing type
-function updateParameterOptions() {
-  const currentProcessingType = processingTypeSelect.value;
-  // console.log('[DEBUG] updateParameterOptions called for type:', currentProcessingType);
-
-  const parameterOptionsForType = allAudioFiles[currentProcessingType];
-  
-  specificParameterSelect.innerHTML = ''; // Clear existing options
-  
-  if (parameterOptionsForType && Object.keys(parameterOptionsForType).length > 0) {
-    // console.log('[DEBUG] Options found for type:', currentProcessingType, parameterOptionsForType);
-    Object.keys(parameterOptionsForType).forEach(key => {
-      const optionData = parameterOptionsForType[key];
-      if (optionData && typeof optionData.text === 'string') {
-        const optionElement = document.createElement('option');
-        optionElement.value = key;
-        optionElement.textContent = optionData.text;
-        specificParameterSelect.appendChild(optionElement);
-        // console.log('[DEBUG] Added option:', key, optionData.text);
-      } else {
-        // console.warn('[DEBUG] Invalid option data for key:', key, 'in type:', currentProcessingType, optionData);
-      }
-    });
-  } else {
-    // console.warn('[DEBUG] No parameter options found or empty options for type:', currentProcessingType, 'in allAudioFiles.');
-    // If no specific options, provide a default placeholder
-    const defaultOption = document.createElement('option');
-    defaultOption.value = 'none'; // or an empty string if 'none' is a valid parameter elsewhere
-    defaultOption.textContent = (currentProcessingType === 'original') ? 'No processing applied' : 'No specific parameters available';
-    specificParameterSelect.appendChild(defaultOption);
-  }
-  
-  // Ensure first option is selected if list is populated
-  if (specificParameterSelect.options.length > 0) {
-    specificParameterSelect.selectedIndex = 0;
-  }
-  
-  updateSelectionSummary(); // Update the summary text below the dropdowns
-}
-
-// Update selection summary
-function updateSelectionSummary() {
-  const baseQuery = baseQuerySelect.value;
-  const processingType = processingTypeSelect.value;
-  
-  const queryName = queryNames[baseQuery] || baseQuery;
-  const processingName = processingTypeNames[processingType] || processingType;
-  const paramName = specificParameterSelect.options[specificParameterSelect.selectedIndex]?.textContent || 'None';
-  
-  selectionSummary.textContent = `${queryName} - ${processingName} - ${paramName}`;
-}
-
-// Apply audio effect
-function applyAudioEffect() {
-  const currentBaseQuery = baseQuerySelect.value;
-  const currentProcessingType = processingTypeSelect.value;
-  const currentParameter = specificParameterSelect.value;
-
-  // console.log('[DEBUG] applyAudioEffect called with:', { currentBaseQuery, currentProcessingType, currentParameter });
-
-  let path_to_play = null;
-  let description_for_audio = `${queryNames[currentBaseQuery]} (配置错误)`; // Default error description
-
-  // Directly try to access the path information
-  if (allAudioFiles && 
-      allAudioFiles[currentProcessingType] && 
-      allAudioFiles[currentProcessingType][currentParameter] && 
-      typeof allAudioFiles[currentProcessingType][currentParameter].path === 'string' && 
-      allAudioFiles[currentProcessingType][currentParameter].path.trim() !== '') {
-        
-      path_to_play = allAudioFiles[currentProcessingType][currentParameter].path;
-      const audioText = allAudioFiles[currentProcessingType][currentParameter].text || currentParameter;
-      description_for_audio = `${queryNames[currentBaseQuery]} (${audioText})`;
-      // console.log('[DEBUG] Path to play found:', path_to_play);
-
-  } else {
-    // console.error('[DEBUG] Failed to find valid audio path. Details:');
-    // console.error('[DEBUG] Processing Type:', currentProcessingType, 'Parameter:', currentParameter);
-    // console.error('[DEBUG] Entry in allAudioFiles:', allAudioFiles[currentProcessingType] ? allAudioFiles[currentProcessingType][currentParameter] : 'Type not found');
-  }
-
-  if (path_to_play) {
-    // console.log('Loading audio:', path_to_play);
-    audioSource.src = path_to_play;
-    audioDesc.textContent = description_for_audio;
     
-    audioPlayer.onerror = null; // Clear previous error handler 
+    // 默认返回原声
+    return 'static/audio/audio_001/audio_001.wav';
+  }
+
+  function getAudioDescription(processingType, parameter) {
+    if (processingType === 'original') return 'No processing applied';
+    if (processingType === 'accent') {
+      if (parameter === 'trump') return 'Donald Trump Accent';
+      if (parameter === 'kanye') return 'Kanye West Accent';
+      if (parameter === 'lucy') return 'Lucy Liu Accent';
+    }
+    if (processingType === 'speed') {
+      if (parameter === 'slow') return 'Speed x 0.5 (Slower)';
+      if (parameter === 'fast') return 'Speed x 1.5 (Faster)';
+    }
+    if (processingType === 'tone') {
+      if (parameter === 'minus8') return 'Semitone -8 (Lower pitch)';
+      if (parameter === 'minus4') return 'Semitone -4 (Lower pitch)';
+      if (parameter === 'plus4') return 'Semitone +4 (Higher pitch)';
+      if (parameter === 'plus8') return 'Semitone +8 (Much higher pitch)';
+    }
+    if (processingType === 'emphasis') {
+      if (parameter === 'vol2') return 'Volume x 2';
+      if (parameter === 'vol5') return 'Volume x 5';
+      if (parameter === 'vol10') return 'Volume x 10';
+    }
+    if (processingType === 'intonation') {
+      if (parameter === 'int2') return 'Interval +2';
+      if (parameter === 'int3') return 'Interval +3';
+      if (parameter === 'int4') return 'Interval +4';
+    }
+    if (processingType === 'background') {
+      if (parameter === 'crowd') return 'Crowd Noise';
+      if (parameter === 'white') return 'White Noise';
+    }
+    if (processingType === 'emotion') {
+      if (parameter === 'laugh') return 'Laugh Effect';
+      if (parameter === 'scream') return 'Scream Effect';
+    }
+    
+    return 'Unknown';
+  }
+
+  // 更新步骤3的选项
+  function updateParameterOptions() {
+    const type = processingTypeSelect.value;
+    specificParameterSelect.innerHTML = '';
+
+    if (type === 'original') {
+      specificParameterSelect.innerHTML = '<option value="none">No processing applied</option>';
+    } else if (type === 'accent') {
+      specificParameterSelect.innerHTML = `
+        <option value="trump">Donald Trump Accent</option>
+        <option value="kanye">Kanye West Accent</option>
+        <option value="lucy">Lucy Liu Accent</option>
+      `;
+    } else if (type === 'speed') {
+      specificParameterSelect.innerHTML = `
+        <option value="slow">Speed x 0.5 (Slower)</option>
+        <option value="fast">Speed x 1.5 (Faster)</option>
+      `;
+    } else if (type === 'tone') {
+      specificParameterSelect.innerHTML = `
+        <option value="minus8">Semitone -8 (Lower pitch)</option>
+        <option value="minus4">Semitone -4 (Lower pitch)</option>
+        <option value="plus4">Semitone +4 (Higher pitch)</option>
+        <option value="plus8">Semitone +8 (Much higher pitch)</option>
+      `;
+    } else if (type === 'emphasis') {
+      specificParameterSelect.innerHTML = `
+        <option value="vol2">Volume x 2</option>
+        <option value="vol5">Volume x 5</option>
+        <option value="vol10">Volume x 10</option>
+      `;
+    } else if (type === 'intonation') {
+      specificParameterSelect.innerHTML = `
+        <option value="int2">Interval +2</option>
+        <option value="int3">Interval +3</option>
+        <option value="int4">Interval +4</option>
+      `;
+    } else if (type === 'background') {
+      specificParameterSelect.innerHTML = `
+        <option value="crowd">Crowd Noise</option>
+        <option value="white">White Noise</option>
+      `;
+    } else if (type === 'emotion') {
+      specificParameterSelect.innerHTML = `
+        <option value="laugh">Laugh Effect</option>
+        <option value="scream">Scream Effect</option>
+      `;
+    }
+
+    updateSummary();
+  }
+
+  // 更新摘要
+  function updateSummary() {
+    const queryName = 'Exploit Script';
+    const typeName = processingTypeSelect.options[processingTypeSelect.selectedIndex].text;
+    const paramName = specificParameterSelect.options[specificParameterSelect.selectedIndex].text;
+    selectionSummary.textContent = `${queryName} - ${typeName} - ${paramName}`;
+  }
+
+  // 播放音频
+  function playAudio() {
+    const type = processingTypeSelect.value;
+    const param = specificParameterSelect.value;
+    
+    const audioPath = getAudioPath(type, param);
+    const description = getAudioDescription(type, param);
+    
+    console.log('Playing audio:', audioPath);
+    
+    audioSource.src = audioPath;
+    audioDesc.textContent = `Exploit Script (${description})`;
+    
     audioPlayer.onerror = function() {
-      // console.error('Error loading audio file from path:', path_to_play);
-      showMessage(`错误：无法加载音频文件 ${path_to_play}。将播放原始音频（audio_001）。`, 'is-warning');
-      audioSource.src = 'static/audio/audio_001/audio_001.wav'; 
-      audioDesc.textContent = `${queryNames[currentBaseQuery]} (原始 - 加载失败: ${currentProcessingType}/${currentParameter})`;
-      audioPlayer.onerror = null; 
+      console.error('Audio failed to load:', audioPath);
+      // 如果失败，播放原声
+      audioSource.src = 'static/audio/audio_001/audio_001.wav';
+      audioDesc.textContent = 'Exploit Script (Original - 文件加载失败)';
+      audioPlayer.onerror = null;
       audioPlayer.load();
     };
     
     audioPlayer.load();
     audioPlayer.play().catch(e => {
-      // console.warn('Autoplay was prevented or failed:', e);
+      console.log('Autoplay prevented');
     });
-    showMessage('音频已加载: ' + description_for_audio, 'is-success');
-  } else {
-    showMessage('配置错误：未找到有效的音频路径。将播放原始音频（audio_001）。', 'is-danger');
-    audioSource.src = 'static/audio/audio_001/audio_001.wav';
-    audioDesc.textContent = `${queryNames[currentBaseQuery]} (原始 - 配置错误: ${currentProcessingType}/${currentParameter})`;
-    audioPlayer.load();
   }
-}
 
-// Show processing status
-function showProcessingStatus() {
-  processingStatus.classList.remove('is-hidden');
-  applyButton.classList.add('is-loading');
-}
+  // 绑定事件
+  processingTypeSelect.addEventListener('change', updateParameterOptions);
+  specificParameterSelect.addEventListener('change', updateSummary);
+  applyButton.addEventListener('click', playAudio);
 
-// Hide processing status
-function hideProcessingStatus() {
-  processingStatus.classList.add('is-hidden');
-  applyButton.classList.remove('is-loading');
-}
-
-// Show message
-function showMessage(text, type) {
-  // Remove existing messages
-  const existingMessages = document.querySelectorAll('.temp-message');
-  existingMessages.forEach(msg => msg.remove());
-  
-  // Create new message
-  const messageDiv = document.createElement('div');
-  messageDiv.className = `notification ${type} temp-message`;
-  messageDiv.innerHTML = `
-    <button class="delete"></button>
-    ${text}
-  `;
-  
-  // Insert after effect info
-  const effectInfo = document.getElementById('effect-info');
-  effectInfo.parentNode.insertBefore(messageDiv, effectInfo.nextSibling);
-  
-  // Add delete functionality
-  const deleteBtn = messageDiv.querySelector('.delete');
-  deleteBtn.addEventListener('click', () => {
-    messageDiv.remove();
-  });
-  
-  // Auto remove after 5 seconds
-  setTimeout(() => {
-    if (messageDiv.parentNode) {
-      messageDiv.remove();
-    }
-  }, 5000);
-}
-
-// Event handlers
-processingTypeSelect.addEventListener('change', updateParameterOptions);
-baseQuerySelect.addEventListener('change', updateSelectionSummary);
-specificParameterSelect.addEventListener('change', updateSelectionSummary);
-
-applyButton.addEventListener('click', function() {
-  showProcessingStatus();
-  // Removed setTimeout for direct execution
-  applyAudioEffect(); 
-  hideProcessingStatus(); // This will hide status quickly; audio loading is async
+  // 初始化
+  updateParameterOptions();
 });
-
-// Handle processing status close button
-const processingDeleteBtn = processingStatus.querySelector('.delete');
-if (processingDeleteBtn) {
-  processingDeleteBtn.addEventListener('click', () => {
-    hideProcessingStatus();
-  });
-}
-
-// Initialize
-updateParameterOptions();
-updateSelectionSummary();
 </script>
 <!-- ============ LEADERBOARD (音频模型) ============ -->
 <!-- ============ LEADERBOARD (音频模型) ============ -->
@@ -1179,235 +1048,6 @@ updateSelectionSummary();
     </div>
   </div>
 </footer>
-
-<!-- 添加JavaScript代码在页面底部 -->
-<script>
-  document.addEventListener('DOMContentLoaded', function() {
-    // Initialize variables
-    const baseAudioSelect = document.getElementById('base-audio');
-    const processingTypeSelect = document.getElementById('processing-type');
-    const specificParameterSelect = document.getElementById('specific-parameter');
-    const applyButton = document.getElementById('apply-button');
-    const audioPlayer = document.getElementById('audio-player');
-    const audioSource = document.getElementById('audio-source');
-    const audioDesc = document.getElementById('audio-desc');
-    const processingStatus = document.getElementById('processing-status');
-    const selectionSummary = document.getElementById('selection-summary');
-    
-    // Parameter options for each processing type
-    const parameterOptions = {
-      original: {
-        'none': 'No processing applied'
-      },
-      speed: {
-        'speed_0.5': 'Speed x 0.5 (Slower)',
-        'speed_1.5': 'Speed x 1.5 (Faster)'
-      },
-      tone: {
-        'tone_-8': 'Semitone -8 (Lower pitch)',
-        'tone_+4': 'Semitone +4 (Higher pitch)',
-        'tone_+8': 'Semitone +8 (Much higher pitch)'
-      },
-      emphasis: {
-        'emphasis_x2': 'Volume x 2',
-        'emphasis_x5': 'Volume x 5',
-        'emphasis_x10': 'Volume x 10'
-      },
-      intonation: {
-        'intonation_+2': 'Interval +2',
-        'intonation_+3': 'Interval +3',
-        'intonation_+4': 'Interval +4'
-      },
-      background: {
-        'noise_crowd': 'Crowd Noise',
-        'noise_machine': 'Machine Noise',
-        'noise_white': 'White Noise'
-      },
-      emotion: {
-        'emotion_laugh': 'Laugh Effect',
-        'emotion_scream': 'Scream Effect'
-      }
-    };
-    
-    // Base audio names
-    const baseAudioNames = {
-      'trump': 'Donald Trump',
-      'kanye': 'Kanye West',
-      'lucy': 'Lucy Liu'
-    };
-    
-    // Processing type names
-    const processingTypeNames = {
-      'original': 'Original',
-      'speed': 'Speed Adjustment',
-      'tone': 'Tone/Pitch Shift',
-      'emphasis': 'Volume Emphasis',
-      'intonation': 'Intonation Pattern',
-      'background': 'Background Noise',
-      'emotion': 'Emotion Effect'
-    };
-    
-    // Processing type change handler
-    processingTypeSelect.addEventListener('change', function() {
-      updateParameterOptions();
-      updateSelectionSummary();
-    });
-    
-    // Base audio change handler
-    baseAudioSelect.addEventListener('change', function() {
-      updateSelectionSummary();
-      updateAudioSource();
-    });
-    
-    // Parameter change handler
-    specificParameterSelect.addEventListener('change', function() {
-      updateSelectionSummary();
-    });
-    
-    // Apply button handler
-    applyButton.addEventListener('click', function() {
-      showProcessingStatus();
-      
-      // Simulate processing delay
-      setTimeout(() => {
-        applyAudioEffect();
-        hideProcessingStatus();
-      }, 1000);
-    });
-    
-    function updateParameterOptions() {
-      const processingType = processingTypeSelect.value;
-      const options = parameterOptions[processingType] || {};
-      
-      // Clear existing options
-      specificParameterSelect.innerHTML = '';
-      
-      // Add new options
-      Object.entries(options).forEach(([value, text]) => {
-        const option = document.createElement('option');
-        option.value = value;
-        option.textContent = text;
-        specificParameterSelect.appendChild(option);
-      });
-      
-      // Select first option
-      if (specificParameterSelect.options.length > 0) {
-        specificParameterSelect.selectedIndex = 0;
-      }
-    }
-    
-    function updateSelectionSummary() {
-      const baseAudio = baseAudioSelect.value;
-      const processingType = processingTypeSelect.value;
-      
-      const baseName = baseAudioNames[baseAudio] || baseAudio;
-      const processingName = processingTypeNames[processingType] || processingType;
-      const paramName = specificParameterSelect.options[specificParameterSelect.selectedIndex]?.textContent || 'None';
-      selectionSummary.textContent = `${baseName} - ${processingName} - ${paramName}`;
-    }
-    
-    function updateAudioSource() {
-      const baseAudio = baseAudioSelect.value;
-      audioSource.src = `static/audio/base/${baseAudio.charAt(0).toUpperCase() + baseAudio.slice(1)}.mp3`;
-      audioDesc.textContent = `${baseAudioNames[baseAudio]} (Original)`;
-      audioPlayer.load();
-    }
-    
-    function applyAudioEffect() {
-      const baseAudio = baseAudioSelect.value;
-      const processingType = processingTypeSelect.value;
-      const parameter = specificParameterSelect.value;
-      
-      let audioPath;
-      let description;
-      
-      if (processingType === 'original' || parameter === 'none') {
-        // Play original
-        audioPath = `static/audio/base/${baseAudio.charAt(0).toUpperCase() + baseAudio.slice(1)}.mp3`;
-        description = `${baseAudioNames[baseAudio]} (Original)`;
-      } else {
-        // Play processed version
-        audioPath = `static/audio/processed/${baseAudio.charAt(0).toUpperCase() + baseAudio.slice(1)}/${parameter}.mp3`;
-        const paramName = specificParameterSelect.options[specificParameterSelect.selectedIndex].textContent;
-        description = `${baseAudioNames[baseAudio]} (${paramName})`;
-      }
-      
-      audioSource.src = audioPath;
-      audioDesc.textContent = description;
-      
-      // Handle file not found
-      audioPlayer.addEventListener('error', function handleError() {
-        showMessage(`Audio file not found: ${parameter}. Using original audio.`, 'is-warning');
-        audioSource.src = `static/audio/base/${baseAudio.charAt(0).toUpperCase() + baseAudio.slice(1)}.mp3`;
-        audioDesc.textContent = `${baseAudioNames[baseAudio]} (Original - Processed version not available)`;
-        audioPlayer.removeEventListener('error', handleError);
-        audioPlayer.load();
-      });
-      
-      audioPlayer.load();
-      
-      // Auto play
-      audioPlayer.play().catch(e => {
-        console.log('Autoplay prevented by browser');
-      });
-      
-      showMessage('Audio loaded successfully!', 'is-success');
-    }
-    
-    function showProcessingStatus() {
-      processingStatus.classList.remove('is-hidden');
-      applyButton.classList.add('is-loading');
-    }
-    
-    function hideProcessingStatus() {
-      processingStatus.classList.add('is-hidden');
-      applyButton.classList.remove('is-loading');
-    }
-    
-    function showMessage(text, type) {
-      // Remove existing messages
-      const existingMessages = document.querySelectorAll('.temp-message');
-      existingMessages.forEach(msg => msg.remove());
-      
-      // Create new message
-      const messageDiv = document.createElement('div');
-      messageDiv.className = `notification ${type} temp-message`;
-      messageDiv.innerHTML = `
-        <button class="delete"></button>
-        ${text}
-      `;
-      
-      // Insert after processing status
-      processingStatus.parentNode.insertBefore(messageDiv, processingStatus.nextSibling);
-      
-      // Add delete functionality
-      const deleteBtn = messageDiv.querySelector('.delete');
-      deleteBtn.addEventListener('click', () => {
-        messageDiv.remove();
-      });
-      
-      // Auto remove after 5 seconds
-      setTimeout(() => {
-        if (messageDiv.parentNode) {
-          messageDiv.remove();
-        }
-      }, 5000);
-    }
-    
-    // Handle processing status close button
-    const processingDeleteBtn = processingStatus.querySelector('.delete');
-    if (processingDeleteBtn) {
-      processingDeleteBtn.addEventListener('click', () => {
-        hideProcessingStatus();
-      });
-    }
-    
-    // Initialize
-    updateParameterOptions();
-    updateSelectionSummary();
-    updateAudioSource();
-  });
-</script>
 
 </body>
 </html>
