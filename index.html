@@ -96,6 +96,59 @@
   .header-row {
     background-color: #efefef !important;
   }
+
+  /* 自定义音频播放器样式 */
+  .custom-audio-player {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+  
+  #progress-bar {
+    -webkit-appearance: none;
+    appearance: none;
+    background: #ddd;
+    border-radius: 3px;
+    height: 6px;
+  }
+  
+  #progress-bar::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #3273dc;
+    cursor: pointer;
+    border: 2px solid white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  }
+  
+  #progress-bar::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #3273dc;
+    cursor: pointer;
+    border: 2px solid white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  }
+  
+  #progress-bar::-webkit-slider-track {
+    background: #ddd;
+    border-radius: 3px;
+    height: 6px;
+  }
+  
+  #progress-bar::-moz-range-track {
+    background: #ddd;
+    border-radius: 3px;
+    height: 6px;
+    border: none;
+  }
+  
+  .audio-controls button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  }
 </style>
 
 </head>
@@ -445,10 +498,67 @@
           <div class="mt-5">
             <h4 class="subtitle is-5">Audio Result</h4>
             <div id="audio-player-container" class="has-text-centered">
-              <audio id="audio-player" controls style="width: 100%; max-width: 500px;">
-                <source src="static/audio/audio_001/audio_001.wav" type="audio/wav" id="audio-source">
-                Your browser does not support the audio element.
-              </audio>
+              <!-- 自定义音频播放器 -->
+              <div class="custom-audio-player" style="background: #f5f5f5; border-radius: 8px; padding: 20px; max-width: 500px; margin: 0 auto;">
+                <audio id="audio-player" preload="auto" style="display: none;">
+                  <source src="static/audio/audio_001/audio_001.wav" type="audio/wav" id="audio-source">
+                  Your browser does not support the audio element.
+                </audio>
+                
+                <!-- 自定义控件 -->
+                <div class="audio-controls">
+                  <div style="display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 15px;">
+                    <button id="play-pause-btn" class="button is-primary is-rounded">
+                      <span class="icon">
+                        <i class="fas fa-play" id="play-icon"></i>
+                      </span>
+                    </button>
+                    
+                    <span id="current-time">0:00</span>
+                    
+                    <div style="flex: 1; max-width: 300px;">
+                      <input type="range" id="progress-bar" value="0" max="100" 
+                             style="width: 100%; height: 6px; border-radius: 3px; background: #ddd; outline: none; cursor: pointer;">
+                    </div>
+                    
+                    <span id="duration">0:00</span>
+                  </div>
+                  
+                  <!-- 下载和播放速度控件 -->
+                  <div style="display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 0.9em;">
+                    <button id="download-btn" class="button is-small is-outlined">
+                      <span class="icon">
+                        <i class="fas fa-download"></i>
+                      </span>
+                      <span>Download</span>
+                    </button>
+                    
+                    <div class="dropdown" id="speed-dropdown">
+                      <div class="dropdown-trigger">
+                        <button class="button is-small is-outlined" aria-haspopup="true" aria-controls="speed-menu">
+                          <span class="icon">
+                            <i class="fas fa-tachometer-alt"></i>
+                          </span>
+                          <span>Playback Speed</span>
+                          <span class="icon is-small">
+                            <i class="fas fa-angle-down" aria-hidden="true"></i>
+                          </span>
+                        </button>
+                      </div>
+                      <div class="dropdown-menu" id="speed-menu" role="menu">
+                        <div class="dropdown-content">
+                          <a href="#" class="dropdown-item speed-option" data-speed="0.5">0.5x</a>
+                          <a href="#" class="dropdown-item speed-option" data-speed="0.75">0.75x</a>
+                          <a href="#" class="dropdown-item speed-option is-active" data-speed="1">1x (Normal)</a>
+                          <a href="#" class="dropdown-item speed-option" data-speed="1.25">1.25x</a>
+                          <a href="#" class="dropdown-item speed-option" data-speed="1.5">1.5x</a>
+                          <a href="#" class="dropdown-item speed-option" data-speed="2">2x</a>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
             
             <!-- 当前音频信息 -->
@@ -484,6 +594,16 @@ document.addEventListener('DOMContentLoaded', function() {
   const audioSource = document.getElementById('audio-source');
   const audioDesc = document.getElementById('audio-desc');
   const selectionSummary = document.getElementById('selection-summary');
+
+  // 自定义音频控件元素
+  const playPauseBtn = document.getElementById('play-pause-btn');
+  const playIcon = document.getElementById('play-icon');
+  const progressBar = document.getElementById('progress-bar');
+  const currentTimeSpan = document.getElementById('current-time');
+  const durationSpan = document.getElementById('duration');
+  const downloadBtn = document.getElementById('download-btn');
+  const speedDropdown = document.getElementById('speed-dropdown');
+  const speedOptions = document.querySelectorAll('.speed-option');
 
   // 最简单的音频文件映射 - 硬编码所有路径
   function getAudioPath(baseQuery, processingType, parameter) {
@@ -592,6 +712,14 @@ document.addEventListener('DOMContentLoaded', function() {
     return 'Unknown Query';
   }
 
+  // 格式化时间
+  function formatTime(seconds) {
+    if (isNaN(seconds)) return '0:00';
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  }
+
   // 更新步骤3的选项
   function updateParameterOptions() {
     const type = processingTypeSelect.value;
@@ -674,18 +802,94 @@ document.addEventListener('DOMContentLoaded', function() {
       // 如果失败，播放原声
       const fallbackPath = getAudioPath(baseQuery, 'original', 'none');
       audioSource.src = fallbackPath;
-      audioDesc.textContent = `${queryName} (Original - 文件加载失败)`;
+      audioDesc.textContent = `${queryName} (Original - File loading failed)`;
       audioPlayer.onerror = null;
       audioPlayer.load();
     };
     
     audioPlayer.load();
-    audioPlayer.play().catch(e => {
-      console.log('Autoplay prevented');
-    });
   }
 
-  // 绑定事件
+  // ===== 自定义音频控件事件 =====
+
+  // 播放/暂停按钮
+  playPauseBtn.addEventListener('click', function() {
+    if (audioPlayer.paused) {
+      audioPlayer.play().then(() => {
+        playIcon.className = 'fas fa-pause';
+      }).catch(e => {
+        console.log('Play failed:', e);
+      });
+    } else {
+      audioPlayer.pause();
+      playIcon.className = 'fas fa-play';
+    }
+  });
+
+  // 音频事件监听
+  audioPlayer.addEventListener('loadedmetadata', function() {
+    durationSpan.textContent = formatTime(audioPlayer.duration);
+    progressBar.max = Math.floor(audioPlayer.duration);
+  });
+
+  audioPlayer.addEventListener('timeupdate', function() {
+    currentTimeSpan.textContent = formatTime(audioPlayer.currentTime);
+    if (audioPlayer.duration) {
+      progressBar.value = audioPlayer.currentTime;
+    }
+  });
+
+  audioPlayer.addEventListener('ended', function() {
+    playIcon.className = 'fas fa-play';
+    progressBar.value = 0;
+    currentTimeSpan.textContent = '0:00';
+  });
+
+  // 进度条控制
+  progressBar.addEventListener('input', function() {
+    audioPlayer.currentTime = progressBar.value;
+  });
+
+  // 下载按钮
+  downloadBtn.addEventListener('click', function() {
+    const link = document.createElement('a');
+    link.href = audioSource.src;
+    link.download = audioSource.src.split('/').pop();
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  });
+
+  // 播放速度下拉菜单
+  speedDropdown.querySelector('.dropdown-trigger button').addEventListener('click', function(e) {
+    e.preventDefault();
+    speedDropdown.classList.toggle('is-active');
+  });
+
+  // 播放速度选项
+  speedOptions.forEach(option => {
+    option.addEventListener('click', function(e) {
+      e.preventDefault();
+      const speed = parseFloat(this.dataset.speed);
+      audioPlayer.playbackRate = speed;
+      
+      // 更新活动状态
+      speedOptions.forEach(opt => opt.classList.remove('is-active'));
+      this.classList.add('is-active');
+      
+      // 关闭下拉菜单
+      speedDropdown.classList.remove('is-active');
+    });
+  });
+
+  // 点击外部关闭下拉菜单
+  document.addEventListener('click', function(e) {
+    if (!speedDropdown.contains(e.target)) {
+      speedDropdown.classList.remove('is-active');
+    }
+  });
+
+  // 绑定原有事件
   processingTypeSelect.addEventListener('change', updateParameterOptions);
   specificParameterSelect.addEventListener('change', updateSummary);
   baseQuerySelect.addEventListener('change', updateSummary);
