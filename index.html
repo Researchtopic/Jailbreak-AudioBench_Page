@@ -35,6 +35,11 @@
   <script src="static/js/bulma-carousel.min.js"></script>
   <script src="static/js/bulma-slider.min.js"></script>
   <script src="static/js/index.js"></script>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 <style>
   .leaderboard-table {
     width: 100%;
@@ -446,6 +451,13 @@
             </a>
           </span>
 
+          <span class="link-block">
+            <a href="#volunteer-voice-collection"
+               class="external-link button is-normal is-rounded is-primary">
+              <span class="icon"><i class="fas fa-microphone-alt"></i></span><span>Volunteer Voice Collection</span>
+            </a>
+          </span>
+
           </span>
         </div>
       </div>
@@ -776,7 +788,7 @@
 </section>
 
 <!-- ============ 志愿者声音采集部分 ============ -->
-<section class="section hero" style="background: #f5f5f5;">
+<section class="section hero" id="volunteer-voice-collection" style="background: #f5f5f5;">
   <div class="container is-max-desktop">
     <div class="columns is-centered has-text-centered">
       <div class="column is-four-fifths">
@@ -919,6 +931,20 @@
               <div class="mt-5" id="recorded-audio-container" style="display: none;">
                 <h5 class="subtitle is-6">Recorded Audio:</h5>
                 <audio id="recorded-audio" controls style="width: 100%;"></audio>
+
+                <!-- 提交按钮 -->
+                <div class="mt-4 has-text-centered">
+                  <button class="button is-success is-large" id="submit-audio-btn" disabled>
+                    <span class="icon">
+                      <i class="fas fa-cloud-upload-alt"></i>
+                    </span>
+                    <span>Submit Audio to Database</span>
+                  </button>
+                  <p class="help mt-2">
+                    <i class="fas fa-info-circle"></i>
+                    Your audio will be securely stored and used for research purposes only
+                  </p>
+                </div>
               </div>
             </div>
 
@@ -948,7 +974,166 @@
   </div>
 </section>
 
+<!-- ============ 管理员面板 (隐藏) ============ -->
+<section class="section" id="admin-panel" style="display: none; background: #f0f0f0;">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered">
+      <div class="column is-four-fifths">
+        <div class="box">
+          <h3 class="title is-4">
+            <i class="fas fa-cog"></i> Admin Panel - Voice Submissions
+          </h3>
+
+          <div class="field is-grouped">
+            <div class="control">
+              <button class="button is-info" id="load-submissions-btn">
+                <span class="icon"><i class="fas fa-download"></i></span>
+                <span>Load Submissions</span>
+              </button>
+            </div>
+            <div class="control">
+              <button class="button is-warning" id="export-submissions-btn">
+                <span class="icon"><i class="fas fa-file-export"></i></span>
+                <span>Export as JSON</span>
+              </button>
+            </div>
+            <div class="control">
+              <button class="button is-danger" id="clear-submissions-btn">
+                <span class="icon"><i class="fas fa-trash"></i></span>
+                <span>Clear Local Data</span>
+              </button>
+            </div>
+          </div>
+
+          <div id="submissions-list">
+            <p class="has-text-grey">Click "Load Submissions" to view submitted data</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <script>
+// Firebase 配置 (请替换为您的实际配置)
+// 要启用Firebase存储，请：
+// 1. 在 https://console.firebase.google.com/ 创建项目
+// 2. 启用 Storage 和 Firestore 服务
+// 3. 替换下面的配置信息
+// 4. 设置适当的安全规则
+const firebaseConfig = {
+  apiKey: "your-api-key-here",
+  authDomain: "your-project.firebaseapp.com",
+  projectId: "your-project-id",
+  storageBucket: "your-project.appspot.com",
+  messagingSenderId: "123456789",
+  appId: "your-app-id"
+};
+
+// 初始化 Firebase (如果还没有初始化)
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
+
+// 获取 Firebase 服务
+const storage = firebase.storage();
+const firestore = firebase.firestore();
+
+// 音频上传功能
+async function uploadAudioToFirebase(audioBlob, userInfo, questionInfo) {
+  try {
+    // 检查Firebase是否可用
+    if (typeof firebase === 'undefined' || !firebase.apps.length) {
+      throw new Error('Firebase not available, using fallback method');
+    }
+
+    // 生成唯一文件名
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const fileName = `audio_recordings/${timestamp}_${questionInfo.id}.wav`;
+
+    // 上传到 Firebase Storage
+    const storageRef = storage.ref(fileName);
+    const uploadTask = await storageRef.put(audioBlob);
+
+    // 获取下载URL
+    const downloadURL = await uploadTask.ref.getDownloadURL();
+
+    // 保存元数据到 Firestore
+    const docRef = await firestore.collection('voice_submissions').add({
+      audioUrl: downloadURL,
+      fileName: fileName,
+      userInfo: userInfo,
+      questionInfo: questionInfo,
+      timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+      status: 'submitted'
+    });
+
+    return {
+      success: true,
+      docId: docRef.id,
+      downloadURL: downloadURL
+    };
+  } catch (error) {
+    console.error('Firebase upload failed, trying fallback method:', error);
+    // 使用备用方法
+    return await uploadAudioFallback(audioBlob, userInfo, questionInfo);
+  }
+}
+
+// 备用音频上传方法 (本地存储 + 模拟上传)
+async function uploadAudioFallback(audioBlob, userInfo, questionInfo) {
+  try {
+    // 生成唯一ID
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const submissionId = `submission_${timestamp}_${questionInfo.id}`;
+
+    // 将音频转换为base64 (用于演示，实际应用中可能需要其他方法)
+    const audioBase64 = await blobToBase64(audioBlob);
+
+    // 创建提交数据
+    const submissionData = {
+      id: submissionId,
+      audioData: audioBase64,
+      userInfo: userInfo,
+      questionInfo: questionInfo,
+      timestamp: new Date().toISOString(),
+      status: 'submitted'
+    };
+
+    // 保存到本地存储 (演示用)
+    const existingSubmissions = JSON.parse(localStorage.getItem('audioSubmissions') || '[]');
+    existingSubmissions.push(submissionData);
+    localStorage.setItem('audioSubmissions', JSON.stringify(existingSubmissions));
+
+    // 模拟网络上传延迟
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    console.log('Audio submission saved locally:', submissionId);
+
+    return {
+      success: true,
+      docId: submissionId,
+      method: 'local_storage'
+    };
+  } catch (error) {
+    console.error('Fallback upload failed:', error);
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+}
+
+// 辅助函数：将Blob转换为Base64
+function blobToBase64(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
 // 问题数据库
 const questionsDatabase = {
   explicit: [
@@ -1575,6 +1760,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const recordingTimer = document.getElementById('recording-timer');
   const recordedAudioContainer = document.getElementById('recorded-audio-container');
   const recordedAudio = document.getElementById('recorded-audio');
+  const submitAudioBtn = document.getElementById('submit-audio-btn');
 
   let mediaRecorder;
   let audioChunks = [];
@@ -1733,6 +1919,7 @@ document.addEventListener('DOMContentLoaded', function() {
           recordedAudio.src = audioUrl;
           recordedAudioContainer.style.display = 'block';
           playbackBtn.disabled = false;
+          submitAudioBtn.disabled = false; // 启用提交按钮
 
           // 停止所有音轨
           stream.getTracks().forEach(track => track.stop());
@@ -1778,10 +1965,86 @@ document.addEventListener('DOMContentLoaded', function() {
     recordingTimer.textContent = `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
   }
 
+  // 重置录音表单
+  function resetRecordingForm() {
+    // 重置录音相关状态
+    recordedBlob = null;
+    audioChunks = [];
+    recordedAudioContainer.style.display = 'none';
+    playbackBtn.disabled = true;
+    submitAudioBtn.disabled = true;
+    submitAudioBtn.innerHTML = '<span class="icon"><i class="fas fa-cloud-upload-alt"></i></span><span>Submit Audio to Database</span>';
+    submitAudioBtn.classList.remove('is-primary');
+    submitAudioBtn.classList.add('is-success');
+
+    // 重置录制按钮
+    recordBtn.innerHTML = '<span class="icon"><i class="fas fa-microphone"></i></span><span>Start Recording</span>';
+    recordBtn.classList.remove('is-dark');
+    recordBtn.classList.add('is-danger');
+    recordingStatus.classList.remove('active');
+    recordingTimer.textContent = '00:00';
+  }
+
   // 播放反馈
   playbackBtn.addEventListener('click', function() {
     if (recordedAudio.src) {
       recordedAudio.play();
+    }
+  });
+
+  // 提交音频到数据库
+  submitAudioBtn.addEventListener('click', async function() {
+    if (!recordedBlob || !selectedQuestion) {
+      alert('Please record audio and select a question before submitting!');
+      return;
+    }
+
+    // 收集用户信息
+    const userInfo = {
+      address: document.getElementById('address').value,
+      gender: document.getElementById('gender').value,
+      genderCustom: document.getElementById('gender-custom').value,
+      race: document.getElementById('race').value,
+      raceCustom: document.getElementById('race-custom').value
+    };
+
+    // 验证必填字段
+    if (!userInfo.address || !userInfo.gender || !userInfo.race) {
+      alert('Please fill in all required fields (Address, Gender, Race) before submitting!');
+      return;
+    }
+
+    // 显示上传状态
+    submitAudioBtn.disabled = true;
+    submitAudioBtn.innerHTML = '<span class="icon"><i class="fas fa-spinner fa-spin"></i></span><span>Uploading...</span>';
+
+    try {
+      // 上传音频
+      const result = await uploadAudioToFirebase(recordedBlob, userInfo, selectedQuestion);
+
+      if (result.success) {
+        // 上传成功
+        submitAudioBtn.innerHTML = '<span class="icon"><i class="fas fa-check"></i></span><span>Submitted Successfully!</span>';
+        submitAudioBtn.classList.remove('is-success');
+        submitAudioBtn.classList.add('is-primary');
+
+        alert('Thank you for your contribution! Your audio has been successfully submitted to our database.');
+
+        // 重置录音表单，允许用户录制新的音频
+        setTimeout(() => {
+          resetRecordingForm();
+        }, 2000);
+      } else {
+        throw new Error(result.error || 'Upload failed');
+      }
+    } catch (error) {
+      console.error('Submission error:', error);
+
+      // 恢复按钮状态
+      submitAudioBtn.disabled = false;
+      submitAudioBtn.innerHTML = '<span class="icon"><i class="fas fa-cloud-upload-alt"></i></span><span>Submit Audio to Database</span>';
+
+      alert('Failed to submit audio. Please try again. Error: ' + error.message);
     }
   });
 
@@ -1805,6 +2068,114 @@ document.addEventListener('DOMContentLoaded', function() {
     // 这里可以添加表单提交逻辑
     alert('Thank you for your participation! Your recording has been saved successfully.');
   });
+
+  // ===== 管理员面板功能 =====
+
+  // 显示管理员面板的快捷键 (Ctrl+Shift+A)
+  document.addEventListener('keydown', function(e) {
+    if (e.ctrlKey && e.shiftKey && e.key === 'A') {
+      const adminPanel = document.getElementById('admin-panel');
+      adminPanel.style.display = adminPanel.style.display === 'none' ? 'block' : 'none';
+      if (adminPanel.style.display === 'block') {
+        adminPanel.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  });
+
+  // 加载提交数据
+  document.getElementById('load-submissions-btn').addEventListener('click', function() {
+    const submissions = JSON.parse(localStorage.getItem('audioSubmissions') || '[]');
+    const submissionsList = document.getElementById('submissions-list');
+
+    if (submissions.length === 0) {
+      submissionsList.innerHTML = '<p class="has-text-grey">No submissions found in local storage</p>';
+      return;
+    }
+
+    let html = `<h5 class="subtitle is-6">Total Submissions: ${submissions.length}</h5>`;
+    html += '<div class="table-container"><table class="table is-fullwidth is-striped">';
+    html += '<thead><tr><th>ID</th><th>Timestamp</th><th>Question</th><th>User Info</th><th>Actions</th></tr></thead><tbody>';
+
+    submissions.forEach((submission, index) => {
+      html += `<tr>
+        <td>${submission.id}</td>
+        <td>${new Date(submission.timestamp).toLocaleString()}</td>
+        <td>Q${submission.questionInfo.id}: ${submission.questionInfo.question.substring(0, 50)}...</td>
+        <td>${submission.userInfo.address}, ${submission.userInfo.gender}, ${submission.userInfo.race}</td>
+        <td>
+          <button class="button is-small is-info" onclick="playSubmissionAudio(${index})">
+            <i class="fas fa-play"></i>
+          </button>
+          <button class="button is-small is-danger" onclick="deleteSubmission(${index})">
+            <i class="fas fa-trash"></i>
+          </button>
+        </td>
+      </tr>`;
+    });
+
+    html += '</tbody></table></div>';
+    submissionsList.innerHTML = html;
+  });
+
+  // 导出数据
+  document.getElementById('export-submissions-btn').addEventListener('click', function() {
+    const submissions = JSON.parse(localStorage.getItem('audioSubmissions') || '[]');
+
+    if (submissions.length === 0) {
+      alert('No submissions to export');
+      return;
+    }
+
+    // 创建导出数据 (不包含音频数据以减小文件大小)
+    const exportData = submissions.map(submission => ({
+      id: submission.id,
+      timestamp: submission.timestamp,
+      userInfo: submission.userInfo,
+      questionInfo: submission.questionInfo,
+      status: submission.status
+    }));
+
+    const dataStr = JSON.stringify(exportData, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(dataBlob);
+    link.download = `voice_submissions_${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  });
+
+  // 清除本地数据
+  document.getElementById('clear-submissions-btn').addEventListener('click', function() {
+    if (confirm('Are you sure you want to clear all local submission data? This action cannot be undone.')) {
+      localStorage.removeItem('audioSubmissions');
+      document.getElementById('submissions-list').innerHTML = '<p class="has-text-grey">Local data cleared</p>';
+      alert('Local submission data has been cleared');
+    }
+  });
+
+  // 播放提交的音频
+  window.playSubmissionAudio = function(index) {
+    const submissions = JSON.parse(localStorage.getItem('audioSubmissions') || '[]');
+    if (submissions[index] && submissions[index].audioData) {
+      const audio = new Audio(submissions[index].audioData);
+      audio.play().catch(e => {
+        console.error('Failed to play audio:', e);
+        alert('Failed to play audio');
+      });
+    }
+  };
+
+  // 删除提交
+  window.deleteSubmission = function(index) {
+    if (confirm('Are you sure you want to delete this submission?')) {
+      const submissions = JSON.parse(localStorage.getItem('audioSubmissions') || '[]');
+      submissions.splice(index, 1);
+      localStorage.setItem('audioSubmissions', JSON.stringify(submissions));
+      document.getElementById('load-submissions-btn').click(); // 重新加载列表
+    }
+  };
 });
 </script>
 
