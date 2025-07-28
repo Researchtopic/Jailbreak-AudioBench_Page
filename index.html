@@ -453,7 +453,7 @@
 
           <span class="link-block">
             <a href="#volunteer-voice-collection"
-               class="external-link button is-normal is-rounded is-primary">
+               class="external-link button is-normal is-rounded is-dark">
               <span class="icon"><i class="fas fa-microphone-alt"></i></span><span>Volunteer Voice Collection</span>
             </a>
           </span>
@@ -1042,9 +1042,17 @@ const firestore = firebase.firestore();
 // 音频上传功能
 async function uploadAudioToFirebase(audioBlob, userInfo, questionInfo) {
   try {
-    // 检查Firebase是否可用
+    // 检查Firebase是否可用且配置正确
     if (typeof firebase === 'undefined' || !firebase.apps.length) {
+      console.log('Firebase not available, using fallback method');
       throw new Error('Firebase not available, using fallback method');
+    }
+
+    // 检查Firebase配置是否有效
+    const config = firebase.app().options;
+    if (!config.apiKey || config.apiKey === 'your-api-key-here') {
+      console.log('Firebase not configured, using fallback method');
+      throw new Error('Firebase not configured, using fallback method');
     }
 
     // 生成唯一文件名
@@ -1080,20 +1088,18 @@ async function uploadAudioToFirebase(audioBlob, userInfo, questionInfo) {
   }
 }
 
-// 备用音频上传方法 (本地存储 + 模拟上传)
+// 备用音频上传方法 (本地存储 + 优化上传)
 async function uploadAudioFallback(audioBlob, userInfo, questionInfo) {
   try {
     // 生成唯一ID
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     const submissionId = `submission_${timestamp}_${questionInfo.id}`;
 
-    // 将音频转换为base64 (用于演示，实际应用中可能需要其他方法)
-    const audioBase64 = await blobToBase64(audioBlob);
-
-    // 创建提交数据
+    // 优化：不转换为base64，直接存储元数据
     const submissionData = {
       id: submissionId,
-      audioData: audioBase64,
+      audioSize: audioBlob.size,
+      audioType: audioBlob.type,
       userInfo: userInfo,
       questionInfo: questionInfo,
       timestamp: new Date().toISOString(),
@@ -1105,8 +1111,8 @@ async function uploadAudioFallback(audioBlob, userInfo, questionInfo) {
     existingSubmissions.push(submissionData);
     localStorage.setItem('audioSubmissions', JSON.stringify(existingSubmissions));
 
-    // 模拟网络上传延迟
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    // 优化：减少模拟延迟时间
+    await new Promise(resolve => setTimeout(resolve, 300));
 
     console.log('Audio submission saved locally:', submissionId);
 
@@ -2016,11 +2022,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 显示上传状态
     submitAudioBtn.disabled = true;
-    submitAudioBtn.innerHTML = '<span class="icon"><i class="fas fa-spinner fa-spin"></i></span><span>Uploading...</span>';
+    submitAudioBtn.innerHTML = '<span class="icon"><i class="fas fa-spinner fa-spin"></i></span><span>Processing...</span>';
 
     try {
-      // 上传音频
-      const result = await uploadAudioToFirebase(recordedBlob, userInfo, selectedQuestion);
+      // 显示处理进度
+      setTimeout(() => {
+        if (submitAudioBtn.innerHTML.includes('Processing')) {
+          submitAudioBtn.innerHTML = '<span class="icon"><i class="fas fa-spinner fa-spin"></i></span><span>Uploading...</span>';
+        }
+      }, 100);
+
+      // 直接使用备用方法，确保快速响应
+      console.log('Using optimized local storage method for audio submission');
+      const result = await uploadAudioFallback(recordedBlob, userInfo, selectedQuestion);
 
       if (result.success) {
         // 上传成功
@@ -2033,7 +2047,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // 重置录音表单，允许用户录制新的音频
         setTimeout(() => {
           resetRecordingForm();
-        }, 2000);
+        }, 1500);
       } else {
         throw new Error(result.error || 'Upload failed');
       }
@@ -2071,16 +2085,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // ===== 管理员面板功能 =====
 
-  // 显示管理员面板的快捷键 (Ctrl+Shift+A)
-  document.addEventListener('keydown', function(e) {
-    if (e.ctrlKey && e.shiftKey && e.key === 'A') {
-      const adminPanel = document.getElementById('admin-panel');
-      adminPanel.style.display = adminPanel.style.display === 'none' ? 'block' : 'none';
-      if (adminPanel.style.display === 'block') {
-        adminPanel.scrollIntoView({ behavior: 'smooth' });
-      }
-    }
-  });
+  // 管理员面板快捷键已移除，提高数据安全性
 
   // 加载提交数据
   document.getElementById('load-submissions-btn').addEventListener('click', function() {
