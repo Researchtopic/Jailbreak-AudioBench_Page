@@ -36,8 +36,8 @@
   <script src="static/js/bulma-slider.min.js"></script>
   <script src="static/js/index.js"></script>
 
-  <!-- 腾讯云COS SDK -->
-  <script src="https://cdn.jsdelivr.net/npm/cos-js-sdk-v5/dist/cos-js-sdk-v5.min.js"></script>
+  <!-- JSZip for creating zip files -->
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 <style>
   .leaderboard-table {
     width: 100%;
@@ -934,36 +934,36 @@
                 <div class="mt-4 has-text-centered">
                   <button class="button is-success is-large" id="submit-audio-btn" disabled>
                     <span class="icon">
-                      <i class="fas fa-cloud-upload-alt"></i>
+                      <i class="fas fa-download"></i>
                     </span>
-                    <span>Submit Audio to Database</span>
+                    <span>Download Audio Package</span>
                   </button>
                   <p class="help mt-2">
                     <i class="fas fa-info-circle"></i>
-                    Your audio will be securely stored in Tencent Cloud COS and used for research purposes only
+                    Your audio and information will be packaged into a zip file for download. Please submit to faignshc@gmail.com
                   </p>
 
                 </div>
               </div>
             </div>
 
-            <!-- 右侧：演示视频 -->
+            <!-- 右侧：说明信息 -->
             <div class="survey-video">
               <div style="width: 100%; max-width: 500px;">
-                <h5 class="subtitle is-5 mb-3">Experiment Demo</h5>
-                <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden;">
-                  <iframe
-                    src="https://www.youtube.com/embed/dQw4w9WgXcQ"
-                    title="Voice Collection Demo"
-                    style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; border-radius: 8px;"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowfullscreen>
-                  </iframe>
+                <h5 class="subtitle is-5 mb-3">Instructions</h5>
+                <div class="notification is-info">
+                  <h6 class="subtitle is-6">How to participate:</h6>
+                  <ol>
+                    <li>Fill in your personal information</li>
+                    <li>Select a question from the database</li>
+                    <li>Record yourself reading the question</li>
+                    <li>Download the package containing your info and audio</li>
+                    <li>Email the package to <strong>faignshc@gmail.com</strong></li>
+                  </ol>
                 </div>
-                <p class="mt-3 has-text-grey">
-                  Watch this video to understand how to participate in our voice collection experiment
-                  and how you can help us better explore the Audio Jailbreak phenomenon
-                </p>
+                <div class="notification is-warning">
+                  <p><strong>Important:</strong> Your participation helps us understand audio jailbreak vulnerabilities in AI systems. All data will be used for research purposes only.</p>
+                </div>
               </div>
             </div>
           </div>
@@ -1016,232 +1016,125 @@
 </section>
 
 <script>
-// 腾讯云COS配置
-const cosConfig = {
-  SecretId: 'AKIDOdikdv3zhEYgbKsENJ2YszsYApVbcSEo',
-  SecretKey: 'PbalncFl6E9rIYbVEl6D8qRuGTVN3Vkm',
-  Bucket: 'audio-jailbreak-1313074372',
-  Region: 'ap-guangzhou',
-  // 云函数代理地址（用于解决CORS问题）
-  // 注意：GitHub Pages使用HTTPS，只能请求HTTPS资源
-  proxyUrl: 'https://1313074372-jn92ev61cp.ap-guangzhou.tencentscf.com',
-  // 云函数名称
-  functionName: 'audio-upload-proxy'
+// 下载配置
+const downloadConfig = {
+  emailAddress: 'faignshc@gmail.com',
+  packagePrefix: 'audio_submission'
 };
 
-// 初始化腾讯云COS实例
-let cos;
-try {
-  cos = new COS({
-    SecretId: cosConfig.SecretId,
-    SecretKey: cosConfig.SecretKey,
-    // 可选配置
-    FileParallelLimit: 3,    // 控制文件上传并发数
-    ChunkParallelLimit: 3,   // 控制单个文件下分块上传并发数
-    ChunkSize: 1024 * 1024,  // 控制分块大小，单位B
-    Protocol: 'https:',      // 强制使用HTTPS
-    Timeout: 60000,          // 设置超时时间为60秒
-  });
-  console.log('COS instance initialized successfully');
-} catch (error) {
-  console.error('Failed to initialize COS instance:', error);
-  cos = null;
-}
 
 
-
-// 音频上传到腾讯云COS功能（通过云函数代理）
-async function uploadAudioToCOS(audioBlob, userInfo, questionInfo) {
+// 创建并下载音频包
+async function createAudioPackage(audioBlob, userInfo, questionInfo) {
   try {
-    console.log('Starting COS upload via HTTPS proxy...');
+    console.log('Creating audio package for download...');
     console.log('Audio blob size:', audioBlob.size);
 
     // 生成唯一文件名
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const fileName = `audio_recordings/${timestamp}_${questionInfo.id}.wav`;
+    const packageName = `${downloadConfig.packagePrefix}_${timestamp}_Q${questionInfo.id}`;
 
-    console.log('Generated filename:', fileName);
+    // 创建ZIP文件
+    const zip = new JSZip();
 
-    // 将音频blob转换为base64格式
-    console.log('Converting audio blob to base64...');
-    const base64Audio = await new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = reject;
-      reader.readAsDataURL(audioBlob);
-    });
+    // 添加音频文件
+    const audioFileName = `audio_Q${questionInfo.id}_${timestamp}.wav`;
+    zip.file(audioFileName, audioBlob);
 
-    // 准备JSON数据（匹配云函数期望的格式）
-    const requestData = {
-      audio: base64Audio, // data:audio/wav;base64,xxxxx格式
-      userInfo: userInfo,
-      questionInfo: questionInfo,
-      fileName: fileName
-    };
-
-    // 通过云函数代理上传
-    console.log('Uploading via HTTPS proxy URL:', cosConfig.proxyUrl);
-    console.log('Request data prepared, audio size:', base64Audio.length);
-
-    const response = await fetch(cosConfig.proxyUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
+    // 创建用户信息文件
+    const userInfoData = {
+      submissionId: `${packageName}`,
+      timestamp: new Date().toISOString(),
+      userInfo: {
+        address: userInfo.address,
+        gender: userInfo.gender === 'other' ? userInfo.genderCustom : userInfo.gender,
+        race: userInfo.race === 'other' ? userInfo.raceCustom : userInfo.race
       },
-      body: JSON.stringify(requestData),
-      // 添加超时设置
-      signal: AbortSignal.timeout(60000) // 60秒超时（base64数据较大）
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('HTTPS proxy error response:', errorText);
-      throw new Error(`HTTP error! status: ${response.status}, response: ${errorText}`);
-    }
-
-    const result = await response.json();
-    console.log('Proxy upload successful:', result);
-
-    // 检查云函数返回的结果
-    if (!result.success) {
-      throw new Error(`Cloud function error: ${result.message || 'Unknown error'}`);
-    }
-
-    // 构造文件访问URL（使用云函数返回的location或构造默认URL）
-    const fileUrl = result.location || `https://${cosConfig.Bucket}.cos.${cosConfig.Region}.myqcloud.com/${fileName}`;
-    console.log('File URL:', fileUrl);
-
-    // 保存元数据到本地存储
-    const submissionData = {
-      id: `cos_${timestamp}_${questionInfo.id}`,
-      audioUrl: fileUrl,
-      fileName: fileName,
-      userInfo: userInfo,
-      questionInfo: questionInfo,
-      timestamp: new Date().toISOString(),
-      status: 'submitted',
-      uploadMethod: 'COS',
-      proxyResponse: result
-    };
-
-    // 保存到本地存储
-    const existingSubmissions = JSON.parse(localStorage.getItem('audioSubmissions') || '[]');
-    existingSubmissions.push(submissionData);
-    localStorage.setItem('audioSubmissions', JSON.stringify(existingSubmissions));
-
-    console.log('COS upload completed successfully via proxy');
-
-    return {
-      success: true,
-      fileUrl: fileUrl,
-      method: 'COS',
-      proxyResult: result
-    };
-
-  } catch (error) {
-    console.error('HTTPS proxy upload failed:', error);
-    console.log('Proxy upload failed, trying direct COS upload as fallback...');
-    return await uploadAudioDirectCOS(audioBlob, userInfo, questionInfo);
-  }
-}
-
-// 直接COS上传（可能遇到CORS问题）
-async function uploadAudioDirectCOS(audioBlob, userInfo, questionInfo) {
-  try {
-    console.log('Starting direct COS upload...');
-
-    // 检查COS SDK是否可用
-    if (typeof COS === 'undefined' || !cos) {
-      console.log('COS SDK not available, using local fallback');
-      throw new Error('COS SDK not available');
-    }
-
-    // 生成唯一文件名
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const fileName = `audio_recordings/${timestamp}_${questionInfo.id}.wav`;
-
-    const uploadResult = await cos.uploadFile({
-      Bucket: cosConfig.Bucket,
-      Region: cosConfig.Region,
-      Key: fileName,
-      Body: audioBlob,
-      SliceSize: 1024 * 1024 * 5,
-      onProgress: function(progressData) {
-        console.log('Direct upload progress:', progressData);
+      questionInfo: {
+        id: questionInfo.id,
+        question: questionInfo.question,
+        category: questionInfo.category,
+        type: questionInfo.type || 'unknown'
+      },
+      audioFile: audioFileName,
+      instructions: {
+        emailTo: downloadConfig.emailAddress,
+        subject: `Audio Jailbreak Research Submission - ${packageName}`,
+        message: 'Please find attached my audio submission for the Jailbreak-AudioBench research project.'
       }
-    });
+    };
 
-    console.log('Direct COS upload successful:', uploadResult);
+    zip.file('submission_info.json', JSON.stringify(userInfoData, null, 2));
 
-    const fileUrl = `https://${cosConfig.Bucket}.cos.${cosConfig.Region}.myqcloud.com/${fileName}`;
+    // 创建README文件
+    const readmeContent = `Audio Jailbreak Research Submission
+=====================================
 
+Submission ID: ${packageName}
+Timestamp: ${new Date().toISOString()}
+
+Files included:
+- ${audioFileName}: Your recorded audio
+- submission_info.json: Your submission details
+
+Instructions:
+1. Please email this entire package to: ${downloadConfig.emailAddress}
+2. Use subject line: "Audio Jailbreak Research Submission - ${packageName}"
+3. Include any additional comments in your email
+
+Thank you for contributing to our research!
+
+Question Details:
+- ID: Q${questionInfo.id}
+- Category: ${questionInfo.category}
+- Question: "${questionInfo.question}"
+
+User Information:
+- Location: ${userInfo.address}
+- Gender: ${userInfo.gender === 'other' ? userInfo.genderCustom : userInfo.gender}
+- Race: ${userInfo.race === 'other' ? userInfo.raceCustom : userInfo.race}
+`;
+
+    zip.file('README.txt', readmeContent);
+
+    // 生成ZIP文件
+    console.log('Generating ZIP file...');
+    const zipBlob = await zip.generateAsync({type: 'blob'});
+
+    // 触发下载
+    const downloadUrl = URL.createObjectURL(zipBlob);
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = `${packageName}.zip`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(downloadUrl);
+
+    // 保存提交记录到本地存储
     const submissionData = {
-      id: `cos_direct_${timestamp}_${questionInfo.id}`,
-      audioUrl: fileUrl,
-      fileName: fileName,
+      id: packageName,
+      timestamp: new Date().toISOString(),
       userInfo: userInfo,
       questionInfo: questionInfo,
-      timestamp: new Date().toISOString(),
-      status: 'submitted',
-      cosLocation: uploadResult.Location,
-      cosETag: uploadResult.ETag,
-      uploadMethod: 'COS_Direct'
+      status: 'downloaded',
+      method: 'Download'
     };
 
     const existingSubmissions = JSON.parse(localStorage.getItem('audioSubmissions') || '[]');
     existingSubmissions.push(submissionData);
     localStorage.setItem('audioSubmissions', JSON.stringify(existingSubmissions));
 
-    return {
-      success: true,
-      fileUrl: fileUrl,
-      location: uploadResult.Location,
-      etag: uploadResult.ETag,
-      method: 'COS_Direct'
-    };
-  } catch (error) {
-    console.error('Direct COS upload failed:', error);
-    // 最终降级到本地存储
-    return await uploadAudioFallback(audioBlob, userInfo, questionInfo);
-  }
-}
-
-// 备用音频上传方法 (本地存储 + 优化上传)
-async function uploadAudioFallback(audioBlob, userInfo, questionInfo) {
-  try {
-    // 生成唯一ID
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const submissionId = `submission_${timestamp}_${questionInfo.id}`;
-
-    // 优化：不转换为base64，直接存储元数据
-    const submissionData = {
-      id: submissionId,
-      audioSize: audioBlob.size,
-      audioType: audioBlob.type,
-      userInfo: userInfo,
-      questionInfo: questionInfo,
-      timestamp: new Date().toISOString(),
-      status: 'submitted',
-      uploadMethod: 'Local'
-    };
-
-    // 保存到本地存储 (演示用)
-    const existingSubmissions = JSON.parse(localStorage.getItem('audioSubmissions') || '[]');
-    existingSubmissions.push(submissionData);
-    localStorage.setItem('audioSubmissions', JSON.stringify(existingSubmissions));
-
-    // 优化：减少模拟延迟时间
-    await new Promise(resolve => setTimeout(resolve, 300));
-
-    console.log('Audio submission saved locally:', submissionId);
+    console.log('Audio package created and downloaded successfully');
 
     return {
       success: true,
-      docId: submissionId,
-      method: 'Local'
+      packageName: packageName,
+      method: 'Download'
     };
+
   } catch (error) {
-    console.error('Fallback upload failed:', error);
+    console.error('Failed to create audio package:', error);
     return {
       success: false,
       error: error.message
@@ -1249,13 +1142,66 @@ async function uploadAudioFallback(audioBlob, userInfo, questionInfo) {
   }
 }
 
-// 辅助函数：将Blob转换为Base64
-function blobToBase64(blob) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = reject;
-    reader.readAsDataURL(blob);
+// 显示邮箱提交指导
+function showEmailInstructions(packageName) {
+  const modal = document.createElement('div');
+  modal.className = 'modal is-active';
+  modal.innerHTML = `
+    <div class="modal-background"></div>
+    <div class="modal-card">
+      <header class="modal-card-head">
+        <p class="modal-card-title">
+          <i class="fas fa-envelope"></i> Email Submission Instructions
+        </p>
+        <button class="delete" aria-label="close"></button>
+      </header>
+      <section class="modal-card-body">
+        <div class="content">
+          <h5>Your package has been downloaded successfully!</h5>
+          <p>Please follow these steps to complete your submission:</p>
+          <ol>
+            <li>Open your email client</li>
+            <li>Create a new email to: <strong>${downloadConfig.emailAddress}</strong></li>
+            <li>Use subject: <strong>"Audio Jailbreak Research Submission - ${packageName}"</strong></li>
+            <li>Attach the downloaded ZIP file: <strong>${packageName}.zip</strong></li>
+            <li>Add any additional comments if needed</li>
+            <li>Send the email</li>
+          </ol>
+          <div class="notification is-info">
+            <p><strong>Note:</strong> The ZIP file contains your audio recording, submission details, and instructions.</p>
+          </div>
+        </div>
+      </section>
+      <footer class="modal-card-foot">
+        <button class="button is-primary modal-close">Got it!</button>
+        <button class="button" onclick="copyEmailAddress()">Copy Email Address</button>
+      </footer>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  // 关闭模态框
+  modal.querySelectorAll('.modal-close, .delete, .modal-background').forEach(element => {
+    element.addEventListener('click', () => {
+      document.body.removeChild(modal);
+    });
+  });
+}
+
+// 复制邮箱地址
+function copyEmailAddress() {
+  navigator.clipboard.writeText(downloadConfig.emailAddress).then(() => {
+    alert('Email address copied to clipboard!');
+  }).catch(() => {
+    // 降级方案
+    const textArea = document.createElement('textarea');
+    textArea.value = downloadConfig.emailAddress;
+    document.body.appendChild(textArea);
+    textArea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textArea);
+    alert('Email address copied to clipboard!');
   });
 }
 
@@ -2098,7 +2044,7 @@ document.addEventListener('DOMContentLoaded', function() {
     recordedAudioContainer.style.display = 'none';
     playbackBtn.disabled = true;
     submitAudioBtn.disabled = true;
-    submitAudioBtn.innerHTML = '<span class="icon"><i class="fas fa-cloud-upload-alt"></i></span><span>Submit Audio to Database</span>';
+    submitAudioBtn.innerHTML = '<span class="icon"><i class="fas fa-download"></i></span><span>Download Audio Package</span>';
     submitAudioBtn.classList.remove('is-primary');
     submitAudioBtn.classList.add('is-success');
 
@@ -2139,53 +2085,47 @@ document.addEventListener('DOMContentLoaded', function() {
       return;
     }
 
-    // 显示上传状态
+    // 显示处理状态
     submitAudioBtn.disabled = true;
-    submitAudioBtn.innerHTML = '<span class="icon"><i class="fas fa-spinner fa-spin"></i></span><span>Processing...</span>';
+    submitAudioBtn.innerHTML = '<span class="icon"><i class="fas fa-spinner fa-spin"></i></span><span>Creating Package...</span>';
 
     try {
-      // 显示处理进度
-      setTimeout(() => {
-        if (submitAudioBtn.innerHTML.includes('Processing')) {
-          submitAudioBtn.innerHTML = '<span class="icon"><i class="fas fa-spinner fa-spin"></i></span><span>Uploading...</span>';
-        }
-      }, 100);
+      // 添加问题类型信息
+      const questionWithType = {
+        ...selectedQuestion,
+        type: questionTypeSelect.value
+      };
 
-      // 尝试上传到腾讯云COS
-      console.log('Uploading to Tencent Cloud COS...');
-      const result = await uploadAudioToCOS(recordedBlob, userInfo, selectedQuestion);
+      // 创建并下载音频包
+      console.log('Creating audio package...');
+      const result = await createAudioPackage(recordedBlob, userInfo, questionWithType);
 
       if (result.success) {
-        // 上传成功
-        submitAudioBtn.innerHTML = '<span class="icon"><i class="fas fa-check"></i></span><span>Submitted Successfully!</span>';
+        // 下载成功
+        submitAudioBtn.innerHTML = '<span class="icon"><i class="fas fa-check"></i></span><span>Package Downloaded!</span>';
         submitAudioBtn.classList.remove('is-success');
         submitAudioBtn.classList.add('is-primary');
 
-        let successMessage;
-        if (result.method === 'COS' || result.method === 'COS_Direct') {
-          successMessage = 'Thank you for your contribution! Your audio has been successfully uploaded to Tencent Cloud COS.';
-        } else {
-          successMessage = 'Thank you for your contribution! Your audio has been successfully saved locally.';
-        }
-        alert(successMessage);
+        // 显示邮箱提交指导
+        showEmailInstructions(result.packageName);
 
-        console.log('Upload result:', result);
+        console.log('Package creation result:', result);
 
         // 重置录音表单，允许用户录制新的音频
         setTimeout(() => {
           resetRecordingForm();
-        }, 1500);
+        }, 2000);
       } else {
-        throw new Error(result.error || 'Upload failed');
+        throw new Error(result.error || 'Package creation failed');
       }
     } catch (error) {
-      console.error('Submission error:', error);
+      console.error('Package creation error:', error);
 
       // 恢复按钮状态
       submitAudioBtn.disabled = false;
-      submitAudioBtn.innerHTML = '<span class="icon"><i class="fas fa-cloud-upload-alt"></i></span><span>Submit Audio to Database</span>';
+      submitAudioBtn.innerHTML = '<span class="icon"><i class="fas fa-download"></i></span><span>Download Audio Package</span>';
 
-      alert('Failed to submit audio. Please try again. Error: ' + error.message);
+      alert('Failed to create audio package. Please try again. Error: ' + error.message);
     }
   });
 
@@ -2229,14 +2169,14 @@ document.addEventListener('DOMContentLoaded', function() {
     html += '<thead><tr><th>ID</th><th>Timestamp</th><th>Question</th><th>User Info</th><th>Storage & Actions</th></tr></thead><tbody>';
 
     submissions.forEach((submission, index) => {
-      const storageType = submission.uploadMethod || (submission.audioUrl && submission.audioUrl.includes('myqcloud.com') ? 'COS' : 'Local');
+      const storageType = submission.method || 'Local';
       html += `<tr>
         <td>${submission.id}</td>
         <td>${new Date(submission.timestamp).toLocaleString()}</td>
         <td>Q${submission.questionInfo.id}: ${submission.questionInfo.question.substring(0, 50)}...</td>
         <td>${submission.userInfo.address}, ${submission.userInfo.gender}, ${submission.userInfo.race}</td>
         <td>
-          <span class="tag ${storageType === 'COS' ? 'is-success' : 'is-warning'}">${storageType}</span>
+          <span class="tag ${storageType === 'Download' ? 'is-success' : 'is-warning'}">${storageType}</span>
           <button class="button is-small is-info" onclick="playSubmissionAudio(${index})">
             <i class="fas fa-play"></i>
           </button>
@@ -2289,29 +2229,12 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
 
-  // 播放提交的音频
+  // 播放提交的音频（现在只显示信息，因为音频已下载）
   window.playSubmissionAudio = function(index) {
     const submissions = JSON.parse(localStorage.getItem('audioSubmissions') || '[]');
     if (submissions[index]) {
       const submission = submissions[index];
-      let audioSrc = null;
-
-      // 优先使用COS URL，其次使用本地audioData
-      if (submission.audioUrl && submission.audioUrl.includes('myqcloud.com')) {
-        audioSrc = submission.audioUrl;
-      } else if (submission.audioData) {
-        audioSrc = submission.audioData;
-      }
-
-      if (audioSrc) {
-        const audio = new Audio(audioSrc);
-        audio.play().catch(e => {
-          console.error('Failed to play audio:', e);
-          alert('Failed to play audio. The file may not be accessible or may have been deleted.');
-        });
-      } else {
-        alert('No audio data available for this submission.');
-      }
+      alert(`Audio submission details:\n\nID: ${submission.id}\nTimestamp: ${new Date(submission.timestamp).toLocaleString()}\nQuestion: Q${submission.questionInfo.id}\nStatus: ${submission.status}\n\nNote: Audio file was downloaded as part of the submission package.`);
     }
   };
 
