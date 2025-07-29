@@ -1023,10 +1023,8 @@ const cosConfig = {
   Bucket: 'audio-jailbreak-1313074372',
   Region: 'ap-guangzhou',
   // 云函数代理地址（用于解决CORS问题）
-  proxyUrls: {
-    https: 'https://1313074372-jn92ev61cp.ap-guangzhou.tencentscf.com',
-    http: 'http://1313074372-jn92ev61cp.ap-guangzhou.tencentscf.com'
-  },
+  // 注意：GitHub Pages使用HTTPS，只能请求HTTPS资源
+  proxyUrl: 'https://1313074372-jn92ev61cp.ap-guangzhou.tencentscf.com',
   // 云函数名称
   functionName: 'audio-upload-proxy'
 };
@@ -1054,71 +1052,64 @@ try {
 
 // 音频上传到腾讯云COS功能（通过云函数代理）
 async function uploadAudioToCOS(audioBlob, userInfo, questionInfo) {
-  // 尝试HTTPS，如果失败则降级到HTTP
-  const proxyUrls = [cosConfig.proxyUrls.https, cosConfig.proxyUrls.http];
+  try {
+    console.log('Starting COS upload via HTTPS proxy...');
+    console.log('Audio blob size:', audioBlob.size);
 
-  for (let i = 0; i < proxyUrls.length; i++) {
-    const proxyUrl = proxyUrls[i];
-    const protocol = proxyUrl.startsWith('https') ? 'HTTPS' : 'HTTP';
+    // 生成唯一文件名
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const fileName = `audio_recordings/${timestamp}_${questionInfo.id}.wav`;
 
-    try {
-      console.log(`Starting COS upload via ${protocol} proxy...`);
-      console.log('Audio blob size:', audioBlob.size);
+    console.log('Generated filename:', fileName);
 
-      // 生成唯一文件名
-      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-      const fileName = `audio_recordings/${timestamp}_${questionInfo.id}.wav`;
+    // 将音频blob转换为base64格式
+    console.log('Converting audio blob to base64...');
+    const base64Audio = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(audioBlob);
+    });
 
-      console.log('Generated filename:', fileName);
+    // 准备JSON数据（匹配云函数期望的格式）
+    const requestData = {
+      audio: base64Audio, // data:audio/wav;base64,xxxxx格式
+      userInfo: userInfo,
+      questionInfo: questionInfo,
+      fileName: fileName
+    };
 
-      // 将音频blob转换为base64格式
-      console.log('Converting audio blob to base64...');
-      const base64Audio = await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = reject;
-        reader.readAsDataURL(audioBlob);
-      });
+    // 通过云函数代理上传
+    console.log('Uploading via HTTPS proxy URL:', cosConfig.proxyUrl);
+    console.log('Request data prepared, audio size:', base64Audio.length);
 
-      // 准备JSON数据（匹配云函数期望的格式）
-      const requestData = {
-        audio: base64Audio, // data:audio/wav;base64,xxxxx格式
-        userInfo: userInfo,
-        questionInfo: questionInfo,
-        fileName: fileName
-      };
+    const response = await fetch(cosConfig.proxyUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestData),
+      // 添加超时设置
+      signal: AbortSignal.timeout(60000) // 60秒超时（base64数据较大）
+    });
 
-      // 通过云函数代理上传
-      console.log(`Uploading via ${protocol} proxy URL:`, proxyUrl);
-      console.log('Request data prepared, audio size:', base64Audio.length);
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('HTTPS proxy error response:', errorText);
+      throw new Error(`HTTP error! status: ${response.status}, response: ${errorText}`);
+    }
 
-      const response = await fetch(proxyUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestData),
-        // 添加超时设置
-        signal: AbortSignal.timeout(60000) // 60秒超时（base64数据较大）
-      });
+    const result = await response.json();
+    console.log('Proxy upload successful:', result);
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`${protocol} proxy error response:`, errorText);
-        throw new Error(`HTTP error! status: ${response.status}, response: ${errorText}`);
-      }
+    // 检查云函数返回的结果
+    if (!result.success) {
+      throw new Error(`Cloud function error: ${result.message || 'Unknown error'}`);
+    }
 
-      const result = await response.json();
-      console.log('Proxy upload successful:', result);
-
-      // 检查云函数返回的结果
-      if (!result.success) {
-        throw new Error(`Cloud function error: ${result.message || 'Unknown error'}`);
-      }
-
-      // 构造文件访问URL（使用云函数返回的location或构造默认URL）
-      const fileUrl = result.location || `https://${cosConfig.Bucket}.cos.${cosConfig.Region}.myqcloud.com/${fileName}`;
-      console.log('File URL:', fileUrl);
+    // 构造文件访问URL（使用云函数返回的location或构造默认URL）
+    const fileUrl = result.location || `https://${cosConfig.Bucket}.cos.${cosConfig.Region}.myqcloud.com/${fileName}`;
+    console.log('File URL:', fileUrl);
 
     // 保存元数据到本地存储
     const submissionData = {
@@ -1138,33 +1129,20 @@ async function uploadAudioToCOS(audioBlob, userInfo, questionInfo) {
     existingSubmissions.push(submissionData);
     localStorage.setItem('audioSubmissions', JSON.stringify(existingSubmissions));
 
-      console.log('COS upload completed successfully via proxy');
+    console.log('COS upload completed successfully via proxy');
 
-      return {
-        success: true,
-        fileUrl: fileUrl,
-        method: 'COS',
-        proxyResult: result
-      };
+    return {
+      success: true,
+      fileUrl: fileUrl,
+      method: 'COS',
+      proxyResult: result
+    };
 
-    } catch (error) {
-      console.error(`${protocol} proxy upload failed:`, error);
-
-      // 如果是最后一个URL，则尝试直接COS上传
-      if (i === proxyUrls.length - 1) {
-        console.log('All proxy attempts failed, trying direct COS upload as fallback...');
-        return await uploadAudioDirectCOS(audioBlob, userInfo, questionInfo);
-      }
-
-      // 否则继续尝试下一个URL
-      console.log(`${protocol} failed, trying next proxy option...`);
-      continue;
-    }
+  } catch (error) {
+    console.error('HTTPS proxy upload failed:', error);
+    console.log('Proxy upload failed, trying direct COS upload as fallback...');
+    return await uploadAudioDirectCOS(audioBlob, userInfo, questionInfo);
   }
-
-  // 如果所有代理都失败，尝试直接上传
-  console.log('All proxy URLs failed, trying direct COS upload...');
-  return await uploadAudioDirectCOS(audioBlob, userInfo, questionInfo);
 }
 
 // 直接COS上传（可能遇到CORS问题）
