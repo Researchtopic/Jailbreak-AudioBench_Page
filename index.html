@@ -942,10 +942,7 @@
                     <i class="fas fa-info-circle"></i>
                     Your audio will be securely stored in Tencent Cloud COS and used for research purposes only
                   </p>
-                  <p class="help mt-1 has-text-warning">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <strong>Note:</strong> This demo uses permanent keys for simplicity. In production, please use temporary keys or STS service for security.
-                  </p>
+
                 </div>
               </div>
             </div>
@@ -996,19 +993,7 @@
               <li><strong>存储路径：</strong> audio_recordings/</li>
             </ul>
 
-            <div class="notification is-warning">
-              <h4 class="subtitle is-6">
-                <i class="fas fa-exclamation-triangle"></i> 安全提醒
-              </h4>
-              <p>当前演示使用永久密钥进行配置，<strong>仅适用于开发和测试环境</strong>。</p>
-              <p>在生产环境中，强烈建议使用以下安全方案：</p>
-              <ul>
-                <li>使用临时密钥（STS）服务</li>
-                <li>通过后端代理进行文件上传</li>
-                <li>使用预签名URL进行安全上传</li>
-                <li>配置适当的CORS和访问权限</li>
-              </ul>
-            </div>
+
 
             <div class="notification is-info">
               <h4 class="subtitle is-6">
@@ -1065,12 +1050,6 @@
 
 <script>
 // 腾讯云COS配置
-// 安全警告：在生产环境中，请不要在前端直接暴露SecretKey！
-// 推荐做法：
-// 1. 使用临时密钥（STS）服务
-// 2. 通过后端代理上传
-// 3. 使用预签名URL
-// 当前配置仅用于演示目的
 const cosConfig = {
   SecretId: 'AKIDOdikdv3zhEYgbKsENJ2YszsYApVbcSEo',
   SecretKey: 'PbalncFl6E9rIYbVEl6D8qRuGTVN3Vkm',
@@ -1079,29 +1058,86 @@ const cosConfig = {
 };
 
 // 初始化腾讯云COS实例
-const cos = new COS({
-  SecretId: cosConfig.SecretId,
-  SecretKey: cosConfig.SecretKey,
-  // 可选配置
-  FileParallelLimit: 3,    // 控制文件上传并发数
-  ChunkParallelLimit: 3,   // 控制单个文件下分块上传并发数
-  ChunkSize: 1024 * 1024,  // 控制分块大小，单位B
-});
+let cos;
+try {
+  cos = new COS({
+    SecretId: cosConfig.SecretId,
+    SecretKey: cosConfig.SecretKey,
+    // 可选配置
+    FileParallelLimit: 3,    // 控制文件上传并发数
+    ChunkParallelLimit: 3,   // 控制单个文件下分块上传并发数
+    ChunkSize: 1024 * 1024,  // 控制分块大小，单位B
+    Protocol: 'https:',      // 强制使用HTTPS
+    Timeout: 60000,          // 设置超时时间为60秒
+  });
+  console.log('COS instance initialized successfully');
+
+  // 测试COS连接
+  testCOSConnection();
+} catch (error) {
+  console.error('Failed to initialize COS instance:', error);
+  cos = null;
+}
+
+// 测试COS连接功能
+async function testCOSConnection() {
+  if (!cos) {
+    console.log('COS instance not available for testing');
+    return;
+  }
+
+  try {
+    console.log('Testing COS connection...');
+    // 尝试获取存储桶信息来测试连接
+    const result = await cos.headBucket({
+      Bucket: cosConfig.Bucket,
+      Region: cosConfig.Region
+    });
+    console.log('COS connection test successful:', result);
+  } catch (error) {
+    console.error('COS connection test failed:', error);
+    console.error('This might be due to:');
+    console.error('1. Incorrect credentials');
+    console.error('2. Bucket does not exist');
+    console.error('3. CORS configuration issues');
+    console.error('4. Network connectivity issues');
+  }
+}
 
 // 音频上传到腾讯云COS功能
 async function uploadAudioToCOS(audioBlob, userInfo, questionInfo) {
   try {
+    console.log('Starting COS upload...');
+    console.log('COS SDK available:', typeof COS !== 'undefined');
+    console.log('COS config:', cosConfig);
+    console.log('Audio blob size:', audioBlob.size);
+
     // 检查COS SDK是否可用
     if (typeof COS === 'undefined') {
       console.log('COS SDK not available, using fallback method');
       throw new Error('COS SDK not available, using fallback method');
     }
 
+    // 检查COS实例是否正确初始化
+    if (!cos) {
+      console.log('COS instance not initialized, using fallback method');
+      throw new Error('COS instance not initialized, using fallback method');
+    }
+
     // 生成唯一文件名
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     const fileName = `audio_recordings/${timestamp}_${questionInfo.id}.wav`;
 
+    console.log('Generated filename:', fileName);
+
     // 上传到腾讯云COS
+    console.log('Starting COS upload with params:', {
+      Bucket: cosConfig.Bucket,
+      Region: cosConfig.Region,
+      Key: fileName,
+      BodySize: audioBlob.size
+    });
+
     const uploadResult = await cos.uploadFile({
       Bucket: cosConfig.Bucket,
       Region: cosConfig.Region,
@@ -1113,11 +1149,15 @@ async function uploadAudioToCOS(audioBlob, userInfo, questionInfo) {
       }
     });
 
+    console.log('COS upload successful:', uploadResult);
+
     // 构造文件访问URL
     const fileUrl = `https://${cosConfig.Bucket}.cos.${cosConfig.Region}.myqcloud.com/${fileName}`;
+    console.log('Generated file URL:', fileUrl);
 
     // 保存元数据到本地存储（在生产环境中应该保存到数据库）
     const submissionData = {
+      id: `cos_${timestamp}_${questionInfo.id}`,
       audioUrl: fileUrl,
       fileName: fileName,
       userInfo: userInfo,
@@ -1125,7 +1165,8 @@ async function uploadAudioToCOS(audioBlob, userInfo, questionInfo) {
       timestamp: new Date().toISOString(),
       status: 'submitted',
       cosLocation: uploadResult.Location,
-      cosETag: uploadResult.ETag
+      cosETag: uploadResult.ETag,
+      uploadMethod: 'COS'
     };
 
     // 保存到本地存储
@@ -1133,14 +1174,22 @@ async function uploadAudioToCOS(audioBlob, userInfo, questionInfo) {
     existingSubmissions.push(submissionData);
     localStorage.setItem('audioSubmissions', JSON.stringify(existingSubmissions));
 
+    console.log('COS upload completed successfully');
+
     return {
       success: true,
       fileUrl: fileUrl,
       location: uploadResult.Location,
-      etag: uploadResult.ETag
+      etag: uploadResult.ETag,
+      method: 'COS'
     };
   } catch (error) {
-    console.error('COS upload failed, trying fallback method:', error);
+    console.error('COS upload failed with error:', error);
+    console.error('Error details:', {
+      name: error.name,
+      message: error.message,
+      stack: error.stack
+    });
     // 使用备用方法
     return await uploadAudioFallback(audioBlob, userInfo, questionInfo);
   }
@@ -1161,7 +1210,8 @@ async function uploadAudioFallback(audioBlob, userInfo, questionInfo) {
       userInfo: userInfo,
       questionInfo: questionInfo,
       timestamp: new Date().toISOString(),
-      status: 'submitted'
+      status: 'submitted',
+      uploadMethod: 'Local'
     };
 
     // 保存到本地存储 (演示用)
@@ -1177,7 +1227,7 @@ async function uploadAudioFallback(audioBlob, userInfo, questionInfo) {
     return {
       success: true,
       docId: submissionId,
-      method: 'local_storage'
+      method: 'Local'
     };
   } catch (error) {
     console.error('Fallback upload failed:', error);
@@ -2100,10 +2150,12 @@ document.addEventListener('DOMContentLoaded', function() {
         submitAudioBtn.classList.remove('is-success');
         submitAudioBtn.classList.add('is-primary');
 
-        const successMessage = result.fileUrl ?
+        const successMessage = result.method === 'COS' ?
           'Thank you for your contribution! Your audio has been successfully uploaded to Tencent Cloud COS.' :
           'Thank you for your contribution! Your audio has been successfully saved locally.';
         alert(successMessage);
+
+        console.log('Upload result:', result);
 
         // 重置录音表单，允许用户录制新的音频
         setTimeout(() => {
