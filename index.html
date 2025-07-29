@@ -36,10 +36,8 @@
   <script src="static/js/bulma-slider.min.js"></script>
   <script src="static/js/index.js"></script>
 
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <!-- 腾讯云COS SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/cos-js-sdk-v5/dist/cos-js-sdk-v5.min.js"></script>
 <style>
   .leaderboard-table {
     width: 100%;
@@ -942,7 +940,11 @@
                   </button>
                   <p class="help mt-2">
                     <i class="fas fa-info-circle"></i>
-                    Your audio will be securely stored and used for research purposes only
+                    Your audio will be securely stored in Tencent Cloud COS and used for research purposes only
+                  </p>
+                  <p class="help mt-1 has-text-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Note:</strong> This demo uses permanent keys for simplicity. In production, please use temporary keys or STS service for security.
                   </p>
                 </div>
               </div>
@@ -966,6 +968,53 @@
                   and how you can help us better explore the Audio Jailbreak phenomenon
                 </p>
               </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 腾讯云COS配置说明 ============ -->
+<section class="section" id="cos-config-info" style="background: #f8f9fa; border-top: 1px solid #e9ecef;">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered">
+      <div class="column is-four-fifths">
+        <div class="box">
+          <h3 class="title is-5">
+            <i class="fas fa-cloud"></i> 腾讯云COS存储配置
+          </h3>
+
+          <div class="content">
+            <p>当前系统已配置使用腾讯云对象存储（COS）作为志愿者音频文件的后端存储。</p>
+
+            <h4 class="subtitle is-6">当前配置信息：</h4>
+            <ul>
+              <li><strong>存储桶：</strong> audio-jailbreak-1313074372</li>
+              <li><strong>地域：</strong> 广州（ap-guangzhou）</li>
+              <li><strong>存储路径：</strong> audio_recordings/</li>
+            </ul>
+
+            <div class="notification is-warning">
+              <h4 class="subtitle is-6">
+                <i class="fas fa-exclamation-triangle"></i> 安全提醒
+              </h4>
+              <p>当前演示使用永久密钥进行配置，<strong>仅适用于开发和测试环境</strong>。</p>
+              <p>在生产环境中，强烈建议使用以下安全方案：</p>
+              <ul>
+                <li>使用临时密钥（STS）服务</li>
+                <li>通过后端代理进行文件上传</li>
+                <li>使用预签名URL进行安全上传</li>
+                <li>配置适当的CORS和访问权限</li>
+              </ul>
+            </div>
+
+            <div class="notification is-info">
+              <h4 class="subtitle is-6">
+                <i class="fas fa-info-circle"></i> 技术说明
+              </h4>
+              <p>系统会自动将上传的音频文件存储到腾讯云COS，并在本地保存相关元数据。如果COS上传失败，系统会自动降级到本地存储模式。</p>
             </div>
           </div>
         </div>
@@ -1015,74 +1064,83 @@
 </section>
 
 <script>
-// Firebase 配置 (请替换为您的实际配置)
-// 要启用Firebase存储，请：
-// 1. 在 https://console.firebase.google.com/ 创建项目
-// 2. 启用 Storage 和 Firestore 服务
-// 3. 替换下面的配置信息
-// 4. 设置适当的安全规则
-const firebaseConfig = {
-  apiKey: "your-api-key-here",
-  authDomain: "your-project.firebaseapp.com",
-  projectId: "your-project-id",
-  storageBucket: "your-project.appspot.com",
-  messagingSenderId: "123456789",
-  appId: "your-app-id"
+// 腾讯云COS配置
+// 安全警告：在生产环境中，请不要在前端直接暴露SecretKey！
+// 推荐做法：
+// 1. 使用临时密钥（STS）服务
+// 2. 通过后端代理上传
+// 3. 使用预签名URL
+// 当前配置仅用于演示目的
+const cosConfig = {
+  SecretId: 'AKIDOdikdv3zhEYgbKsENJ2YszsYApVbcSEo',
+  SecretKey: 'PbalncFl6E9rIYbVEl6D8qRuGTVN3Vkm',
+  Bucket: 'audio-jailbreak-1313074372',
+  Region: 'ap-guangzhou'
 };
 
-// 初始化 Firebase (如果还没有初始化)
-if (!firebase.apps.length) {
-  firebase.initializeApp(firebaseConfig);
-}
+// 初始化腾讯云COS实例
+const cos = new COS({
+  SecretId: cosConfig.SecretId,
+  SecretKey: cosConfig.SecretKey,
+  // 可选配置
+  FileParallelLimit: 3,    // 控制文件上传并发数
+  ChunkParallelLimit: 3,   // 控制单个文件下分块上传并发数
+  ChunkSize: 1024 * 1024,  // 控制分块大小，单位B
+});
 
-// 获取 Firebase 服务
-const storage = firebase.storage();
-const firestore = firebase.firestore();
-
-// 音频上传功能
-async function uploadAudioToFirebase(audioBlob, userInfo, questionInfo) {
+// 音频上传到腾讯云COS功能
+async function uploadAudioToCOS(audioBlob, userInfo, questionInfo) {
   try {
-    // 检查Firebase是否可用且配置正确
-    if (typeof firebase === 'undefined' || !firebase.apps.length) {
-      console.log('Firebase not available, using fallback method');
-      throw new Error('Firebase not available, using fallback method');
-    }
-
-    // 检查Firebase配置是否有效
-    const config = firebase.app().options;
-    if (!config.apiKey || config.apiKey === 'your-api-key-here') {
-      console.log('Firebase not configured, using fallback method');
-      throw new Error('Firebase not configured, using fallback method');
+    // 检查COS SDK是否可用
+    if (typeof COS === 'undefined') {
+      console.log('COS SDK not available, using fallback method');
+      throw new Error('COS SDK not available, using fallback method');
     }
 
     // 生成唯一文件名
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     const fileName = `audio_recordings/${timestamp}_${questionInfo.id}.wav`;
 
-    // 上传到 Firebase Storage
-    const storageRef = storage.ref(fileName);
-    const uploadTask = await storageRef.put(audioBlob);
+    // 上传到腾讯云COS
+    const uploadResult = await cos.uploadFile({
+      Bucket: cosConfig.Bucket,
+      Region: cosConfig.Region,
+      Key: fileName,
+      Body: audioBlob,
+      SliceSize: 1024 * 1024 * 5, // 5MB以上使用分块上传
+      onProgress: function(progressData) {
+        console.log('Upload progress:', progressData);
+      }
+    });
 
-    // 获取下载URL
-    const downloadURL = await uploadTask.ref.getDownloadURL();
+    // 构造文件访问URL
+    const fileUrl = `https://${cosConfig.Bucket}.cos.${cosConfig.Region}.myqcloud.com/${fileName}`;
 
-    // 保存元数据到 Firestore
-    const docRef = await firestore.collection('voice_submissions').add({
-      audioUrl: downloadURL,
+    // 保存元数据到本地存储（在生产环境中应该保存到数据库）
+    const submissionData = {
+      audioUrl: fileUrl,
       fileName: fileName,
       userInfo: userInfo,
       questionInfo: questionInfo,
-      timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-      status: 'submitted'
-    });
+      timestamp: new Date().toISOString(),
+      status: 'submitted',
+      cosLocation: uploadResult.Location,
+      cosETag: uploadResult.ETag
+    };
+
+    // 保存到本地存储
+    const existingSubmissions = JSON.parse(localStorage.getItem('audioSubmissions') || '[]');
+    existingSubmissions.push(submissionData);
+    localStorage.setItem('audioSubmissions', JSON.stringify(existingSubmissions));
 
     return {
       success: true,
-      docId: docRef.id,
-      downloadURL: downloadURL
+      fileUrl: fileUrl,
+      location: uploadResult.Location,
+      etag: uploadResult.ETag
     };
   } catch (error) {
-    console.error('Firebase upload failed, trying fallback method:', error);
+    console.error('COS upload failed, trying fallback method:', error);
     // 使用备用方法
     return await uploadAudioFallback(audioBlob, userInfo, questionInfo);
   }
@@ -2032,9 +2090,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
       }, 100);
 
-      // 直接使用备用方法，确保快速响应
-      console.log('Using optimized local storage method for audio submission');
-      const result = await uploadAudioFallback(recordedBlob, userInfo, selectedQuestion);
+      // 尝试上传到腾讯云COS
+      console.log('Uploading to Tencent Cloud COS...');
+      const result = await uploadAudioToCOS(recordedBlob, userInfo, selectedQuestion);
 
       if (result.success) {
         // 上传成功
@@ -2042,7 +2100,10 @@ document.addEventListener('DOMContentLoaded', function() {
         submitAudioBtn.classList.remove('is-success');
         submitAudioBtn.classList.add('is-primary');
 
-        alert('Thank you for your contribution! Your audio has been successfully submitted to our database.');
+        const successMessage = result.fileUrl ?
+          'Thank you for your contribution! Your audio has been successfully uploaded to Tencent Cloud COS.' :
+          'Thank you for your contribution! Your audio has been successfully saved locally.';
+        alert(successMessage);
 
         // 重置录音表单，允许用户录制新的音频
         setTimeout(() => {
@@ -2099,15 +2160,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
     let html = `<h5 class="subtitle is-6">Total Submissions: ${submissions.length}</h5>`;
     html += '<div class="table-container"><table class="table is-fullwidth is-striped">';
-    html += '<thead><tr><th>ID</th><th>Timestamp</th><th>Question</th><th>User Info</th><th>Actions</th></tr></thead><tbody>';
+    html += '<thead><tr><th>ID</th><th>Timestamp</th><th>Question</th><th>User Info</th><th>Storage & Actions</th></tr></thead><tbody>';
 
     submissions.forEach((submission, index) => {
+      const storageType = submission.audioUrl ? (submission.audioUrl.includes('myqcloud.com') ? 'COS' : 'Local') : 'Local';
       html += `<tr>
         <td>${submission.id}</td>
         <td>${new Date(submission.timestamp).toLocaleString()}</td>
         <td>Q${submission.questionInfo.id}: ${submission.questionInfo.question.substring(0, 50)}...</td>
         <td>${submission.userInfo.address}, ${submission.userInfo.gender}, ${submission.userInfo.race}</td>
         <td>
+          <span class="tag ${storageType === 'COS' ? 'is-success' : 'is-warning'}">${storageType}</span>
           <button class="button is-small is-info" onclick="playSubmissionAudio(${index})">
             <i class="fas fa-play"></i>
           </button>
@@ -2163,12 +2226,26 @@ document.addEventListener('DOMContentLoaded', function() {
   // 播放提交的音频
   window.playSubmissionAudio = function(index) {
     const submissions = JSON.parse(localStorage.getItem('audioSubmissions') || '[]');
-    if (submissions[index] && submissions[index].audioData) {
-      const audio = new Audio(submissions[index].audioData);
-      audio.play().catch(e => {
-        console.error('Failed to play audio:', e);
-        alert('Failed to play audio');
-      });
+    if (submissions[index]) {
+      const submission = submissions[index];
+      let audioSrc = null;
+
+      // 优先使用COS URL，其次使用本地audioData
+      if (submission.audioUrl && submission.audioUrl.includes('myqcloud.com')) {
+        audioSrc = submission.audioUrl;
+      } else if (submission.audioData) {
+        audioSrc = submission.audioData;
+      }
+
+      if (audioSrc) {
+        const audio = new Audio(audioSrc);
+        audio.play().catch(e => {
+          console.error('Failed to play audio:', e);
+          alert('Failed to play audio. The file may not be accessible or may have been deleted.');
+        });
+      } else {
+        alert('No audio data available for this submission.');
+      }
     }
   };
 
