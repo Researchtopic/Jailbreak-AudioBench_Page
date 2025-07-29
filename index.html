@@ -973,40 +973,7 @@
   </div>
 </section>
 
-<!-- ============ 腾讯云COS配置说明 ============ -->
-<section class="section" id="cos-config-info" style="background: #f8f9fa; border-top: 1px solid #e9ecef;">
-  <div class="container is-max-desktop">
-    <div class="columns is-centered">
-      <div class="column is-four-fifths">
-        <div class="box">
-          <h3 class="title is-5">
-            <i class="fas fa-cloud"></i> 腾讯云COS存储配置
-          </h3>
 
-          <div class="content">
-            <p>当前系统已配置使用腾讯云对象存储（COS）作为志愿者音频文件的后端存储。</p>
-
-            <h4 class="subtitle is-6">当前配置信息：</h4>
-            <ul>
-              <li><strong>存储桶：</strong> audio-jailbreak-1313074372</li>
-              <li><strong>地域：</strong> 广州（ap-guangzhou）</li>
-              <li><strong>存储路径：</strong> audio_recordings/</li>
-            </ul>
-
-
-
-            <div class="notification is-info">
-              <h4 class="subtitle is-6">
-                <i class="fas fa-info-circle"></i> 技术说明
-              </h4>
-              <p>系统会自动将上传的音频文件存储到腾讯云COS，并在本地保存相关元数据。如果COS上传失败，系统会自动降级到本地存储模式。</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
 
 <!-- ============ 管理员面板 (隐藏) ============ -->
 <section class="section" id="admin-panel" style="display: none; background: #f0f0f0;">
@@ -1054,7 +1021,9 @@ const cosConfig = {
   SecretId: 'AKIDOdikdv3zhEYgbKsENJ2YszsYApVbcSEo',
   SecretKey: 'PbalncFl6E9rIYbVEl6D8qRuGTVN3Vkm',
   Bucket: 'audio-jailbreak-1313074372',
-  Region: 'ap-guangzhou'
+  Region: 'ap-guangzhou',
+  // 云函数代理地址（用于解决CORS问题）
+  proxyUrl: 'https://1313074372-jn92ev61cp.ap-guangzhou.tencentscf.com'
 };
 
 // 初始化腾讯云COS实例
@@ -1071,58 +1040,18 @@ try {
     Timeout: 60000,          // 设置超时时间为60秒
   });
   console.log('COS instance initialized successfully');
-
-  // 测试COS连接
-  testCOSConnection();
 } catch (error) {
   console.error('Failed to initialize COS instance:', error);
   cos = null;
 }
 
-// 测试COS连接功能
-async function testCOSConnection() {
-  if (!cos) {
-    console.log('COS instance not available for testing');
-    return;
-  }
 
-  try {
-    console.log('Testing COS connection...');
-    // 尝试获取存储桶信息来测试连接
-    const result = await cos.headBucket({
-      Bucket: cosConfig.Bucket,
-      Region: cosConfig.Region
-    });
-    console.log('COS connection test successful:', result);
-  } catch (error) {
-    console.error('COS connection test failed:', error);
-    console.error('This might be due to:');
-    console.error('1. Incorrect credentials');
-    console.error('2. Bucket does not exist');
-    console.error('3. CORS configuration issues');
-    console.error('4. Network connectivity issues');
-  }
-}
 
-// 音频上传到腾讯云COS功能
+// 音频上传到腾讯云COS功能（通过云函数代理）
 async function uploadAudioToCOS(audioBlob, userInfo, questionInfo) {
   try {
-    console.log('Starting COS upload...');
-    console.log('COS SDK available:', typeof COS !== 'undefined');
-    console.log('COS config:', cosConfig);
+    console.log('Starting COS upload via proxy...');
     console.log('Audio blob size:', audioBlob.size);
-
-    // 检查COS SDK是否可用
-    if (typeof COS === 'undefined') {
-      console.log('COS SDK not available, using fallback method');
-      throw new Error('COS SDK not available, using fallback method');
-    }
-
-    // 检查COS实例是否正确初始化
-    if (!cos) {
-      console.log('COS instance not initialized, using fallback method');
-      throw new Error('COS instance not initialized, using fallback method');
-    }
 
     // 生成唯一文件名
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
@@ -1130,32 +1059,36 @@ async function uploadAudioToCOS(audioBlob, userInfo, questionInfo) {
 
     console.log('Generated filename:', fileName);
 
-    // 上传到腾讯云COS
-    console.log('Starting COS upload with params:', {
-      Bucket: cosConfig.Bucket,
-      Region: cosConfig.Region,
-      Key: fileName,
-      BodySize: audioBlob.size
-    });
+    // 准备FormData
+    const formData = new FormData();
+    formData.append('file', audioBlob, fileName);
+    formData.append('fileName', fileName);
+    formData.append('userInfo', JSON.stringify(userInfo));
+    formData.append('questionInfo', JSON.stringify(questionInfo));
 
-    const uploadResult = await cos.uploadFile({
-      Bucket: cosConfig.Bucket,
-      Region: cosConfig.Region,
-      Key: fileName,
-      Body: audioBlob,
-      SliceSize: 1024 * 1024 * 5, // 5MB以上使用分块上传
-      onProgress: function(progressData) {
-        console.log('Upload progress:', progressData);
+    // 通过云函数代理上传
+    console.log('Uploading via proxy URL:', cosConfig.proxyUrl);
+
+    const response = await fetch(cosConfig.proxyUrl, {
+      method: 'POST',
+      body: formData,
+      headers: {
+        // 不设置Content-Type，让浏览器自动设置multipart/form-data边界
       }
     });
 
-    console.log('COS upload successful:', uploadResult);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+    console.log('Proxy upload successful:', result);
 
     // 构造文件访问URL
-    const fileUrl = `https://${cosConfig.Bucket}.cos.${cosConfig.Region}.myqcloud.com/${fileName}`;
+    const fileUrl = result.fileUrl || `https://${cosConfig.Bucket}.cos.${cosConfig.Region}.myqcloud.com/${fileName}`;
     console.log('Generated file URL:', fileUrl);
 
-    // 保存元数据到本地存储（在生产环境中应该保存到数据库）
+    // 保存元数据到本地存储
     const submissionData = {
       id: `cos_${timestamp}_${questionInfo.id}`,
       audioUrl: fileUrl,
@@ -1164,9 +1097,8 @@ async function uploadAudioToCOS(audioBlob, userInfo, questionInfo) {
       questionInfo: questionInfo,
       timestamp: new Date().toISOString(),
       status: 'submitted',
-      cosLocation: uploadResult.Location,
-      cosETag: uploadResult.ETag,
-      uploadMethod: 'COS'
+      uploadMethod: 'COS',
+      proxyResponse: result
     };
 
     // 保存到本地存储
@@ -1174,23 +1106,85 @@ async function uploadAudioToCOS(audioBlob, userInfo, questionInfo) {
     existingSubmissions.push(submissionData);
     localStorage.setItem('audioSubmissions', JSON.stringify(existingSubmissions));
 
-    console.log('COS upload completed successfully');
+    console.log('COS upload completed successfully via proxy');
+
+    return {
+      success: true,
+      fileUrl: fileUrl,
+      method: 'COS',
+      proxyResult: result
+    };
+  } catch (error) {
+    console.error('COS proxy upload failed with error:', error);
+    console.error('Error details:', {
+      name: error.name,
+      message: error.message,
+      stack: error.stack
+    });
+
+    // 如果云函数代理失败，尝试直接COS上传
+    console.log('Trying direct COS upload as fallback...');
+    return await uploadAudioDirectCOS(audioBlob, userInfo, questionInfo);
+  }
+}
+
+// 直接COS上传（可能遇到CORS问题）
+async function uploadAudioDirectCOS(audioBlob, userInfo, questionInfo) {
+  try {
+    console.log('Starting direct COS upload...');
+
+    // 检查COS SDK是否可用
+    if (typeof COS === 'undefined' || !cos) {
+      console.log('COS SDK not available, using local fallback');
+      throw new Error('COS SDK not available');
+    }
+
+    // 生成唯一文件名
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const fileName = `audio_recordings/${timestamp}_${questionInfo.id}.wav`;
+
+    const uploadResult = await cos.uploadFile({
+      Bucket: cosConfig.Bucket,
+      Region: cosConfig.Region,
+      Key: fileName,
+      Body: audioBlob,
+      SliceSize: 1024 * 1024 * 5,
+      onProgress: function(progressData) {
+        console.log('Direct upload progress:', progressData);
+      }
+    });
+
+    console.log('Direct COS upload successful:', uploadResult);
+
+    const fileUrl = `https://${cosConfig.Bucket}.cos.${cosConfig.Region}.myqcloud.com/${fileName}`;
+
+    const submissionData = {
+      id: `cos_direct_${timestamp}_${questionInfo.id}`,
+      audioUrl: fileUrl,
+      fileName: fileName,
+      userInfo: userInfo,
+      questionInfo: questionInfo,
+      timestamp: new Date().toISOString(),
+      status: 'submitted',
+      cosLocation: uploadResult.Location,
+      cosETag: uploadResult.ETag,
+      uploadMethod: 'COS_Direct'
+    };
+
+    const existingSubmissions = JSON.parse(localStorage.getItem('audioSubmissions') || '[]');
+    existingSubmissions.push(submissionData);
+    localStorage.setItem('audioSubmissions', JSON.stringify(existingSubmissions));
 
     return {
       success: true,
       fileUrl: fileUrl,
       location: uploadResult.Location,
       etag: uploadResult.ETag,
-      method: 'COS'
+      method: 'COS_Direct'
     };
   } catch (error) {
-    console.error('COS upload failed with error:', error);
-    console.error('Error details:', {
-      name: error.name,
-      message: error.message,
-      stack: error.stack
-    });
-    // 使用备用方法
+    console.error('Direct COS upload failed:', error);
+    // 最终降级到本地存储
     return await uploadAudioFallback(audioBlob, userInfo, questionInfo);
   }
 }
@@ -2150,9 +2144,12 @@ document.addEventListener('DOMContentLoaded', function() {
         submitAudioBtn.classList.remove('is-success');
         submitAudioBtn.classList.add('is-primary');
 
-        const successMessage = result.method === 'COS' ?
-          'Thank you for your contribution! Your audio has been successfully uploaded to Tencent Cloud COS.' :
-          'Thank you for your contribution! Your audio has been successfully saved locally.';
+        let successMessage;
+        if (result.method === 'COS' || result.method === 'COS_Direct') {
+          successMessage = 'Thank you for your contribution! Your audio has been successfully uploaded to Tencent Cloud COS.';
+        } else {
+          successMessage = 'Thank you for your contribution! Your audio has been successfully saved locally.';
+        }
         alert(successMessage);
 
         console.log('Upload result:', result);
@@ -2215,7 +2212,7 @@ document.addEventListener('DOMContentLoaded', function() {
     html += '<thead><tr><th>ID</th><th>Timestamp</th><th>Question</th><th>User Info</th><th>Storage & Actions</th></tr></thead><tbody>';
 
     submissions.forEach((submission, index) => {
-      const storageType = submission.audioUrl ? (submission.audioUrl.includes('myqcloud.com') ? 'COS' : 'Local') : 'Local';
+      const storageType = submission.uploadMethod || (submission.audioUrl && submission.audioUrl.includes('myqcloud.com') ? 'COS' : 'Local');
       html += `<tr>
         <td>${submission.id}</td>
         <td>${new Date(submission.timestamp).toLocaleString()}</td>
