@@ -553,35 +553,33 @@
 
                 <div class="form-group">
                   <label for="gender">Gender</label>
-                  <select id="gender" name="gender" required>
-                    <option value="">Please select</option>
-                    <option value="male">Male</option>
-                    <option value="female">Female</option>
-                    <option value="other">Other</option>
-                    <option value="prefer-not-say">Prefer not to say</option>
-                  </select>
-                  <div class="custom-input-group" id="gender-custom-group">
-                    <input type="text" id="gender-custom" placeholder="Please specify" class="input">
-                  </div>
+                  <input type="text" id="gender" name="gender" placeholder="e.g., Male, Female, Non-binary, etc." required>
                 </div>
 
                 <div class="form-group">
                   <label for="race">Human Race</label>
-                  <select id="race" name="race" required>
+                  <input type="text" id="race" name="race" placeholder="e.g., Asian, African, Caucasian, Mixed, etc." required>
+                </div>
+
+                <div class="form-group">
+                  <label for="editing-type">Editing Type</label>
+                  <select id="editing-type" name="editing-type" required>
                     <option value="">Please select</option>
-                    <option value="asian">Asian</option>
-                    <option value="african">African</option>
-                    <option value="caucasian">Caucasian</option>
-                    <option value="hispanic">Hispanic/Latino</option>
-                    <option value="middle-eastern">Middle Eastern</option>
-                    <option value="native-american">Native American</option>
-                    <option value="pacific-islander">Pacific Islander</option>
-                    <option value="mixed">Mixed Race</option>
-                    <option value="other">Other</option>
+                    <option value="none">None</option>
+                    <option value="emphasis">Emphasis</option>
+                    <option value="speed">Speed</option>
+                    <option value="intonation">Intonation</option>
+                    <option value="tone">Tone</option>
+                    <option value="background-noise">Background Noise</option>
+                    <option value="emotion">Emotion</option>
                   </select>
-                  <div class="custom-input-group" id="race-custom-group">
-                    <input type="text" id="race-custom" placeholder="Please specify" class="input">
-                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label for="editing-parameters">Parameters</label>
+                  <select id="editing-parameters" name="editing-parameters" required disabled>
+                    <option value="">Please select editing type first</option>
+                  </select>
                 </div>
 
                 <div class="form-group">
@@ -678,11 +676,26 @@
                   <h6 class="subtitle is-6">How to participate:</h6>
                   <ol>
                     <li>Fill in your personal information</li>
+                    <li>Select editing type and parameters for your recording style</li>
                     <li>Select a question from the database</li>
-                    <li>Record yourself reading the question</li>
+                    <li>Record yourself reading the question with chosen editing style</li>
                     <li>Download the package containing your info and audio</li>
                     <li>Email the package to <strong>faignshc@gmail.com</strong></li>
                   </ol>
+
+                  <h6 class="subtitle is-6 mt-4">Symbol Guide:</h6>
+                  <ul>
+                    <li><strong>-</strong> represents decrease</li>
+                    <li><strong>+</strong> represents increase</li>
+                    <li><strong>--</strong> and <strong>++</strong> represent stronger intensity changes</li>
+                  </ul>
+
+                  <h6 class="subtitle is-6 mt-4">Background Noise Downloads:</h6>
+                  <ul>
+                    <li><a href="static/audio/crowd_noise.wav" download>Crowd Noise</a></li>
+                    <li><a href="static/audio/machine_noise.wav" download>Machine Noise</a></li>
+                    <li><a href="static/audio/white_noise.wav" download>White Noise</a></li>
+                  </ul>
                 </div>
                 <div class="notification is-warning">
                   <p><strong>Important:</strong> Your participation helps us understand audio jailbreak vulnerabilities in AI systems. All data will be used for research purposes only.</p>
@@ -1104,8 +1117,10 @@ async function createMultipleAudioPackage(recordingsData, userInfo) {
       totalRecordings: recordingsData.length,
       userInfo: {
         address: userInfo.address,
-        gender: userInfo.gender === 'other' ? userInfo.genderCustom : userInfo.gender,
-        race: userInfo.race === 'other' ? userInfo.raceCustom : userInfo.race
+        gender: userInfo.gender,
+        race: userInfo.race,
+        editingType: userInfo.editingType,
+        editingParameters: userInfo.editingParameters
       },
       recordings: audioFiles,
       instructions: {
@@ -1148,8 +1163,10 @@ Recording ${index + 1}:
 
 User Information:
 - Location: ${userInfo.address}
-- Gender: ${userInfo.gender === 'other' ? userInfo.genderCustom : userInfo.gender}
-- Race: ${userInfo.race === 'other' ? userInfo.raceCustom : userInfo.race}
+- Gender: ${userInfo.gender}
+- Race: ${userInfo.race}
+- Editing Type: ${userInfo.editingType}
+- Editing Parameters: ${userInfo.editingParameters}
 `;
 
     zip.file('README.txt', readmeContent);
@@ -1223,8 +1240,10 @@ async function createAudioPackage(audioBlob, userInfo, questionInfo) {
       timestamp: new Date().toISOString(),
       userInfo: {
         address: userInfo.address,
-        gender: userInfo.gender === 'other' ? userInfo.genderCustom : userInfo.gender,
-        race: userInfo.race === 'other' ? userInfo.raceCustom : userInfo.race
+        gender: userInfo.gender,
+        race: userInfo.race,
+        editingType: userInfo.editingType,
+        editingParameters: userInfo.editingParameters
       },
       questionInfo: {
         id: questionInfo.id,
@@ -1267,8 +1286,10 @@ Question Details:
 
 User Information:
 - Location: ${userInfo.address}
-- Gender: ${userInfo.gender === 'other' ? userInfo.genderCustom : userInfo.gender}
-- Race: ${userInfo.race === 'other' ? userInfo.raceCustom : userInfo.race}
+- Gender: ${userInfo.gender}
+- Race: ${userInfo.race}
+- Editing Type: ${userInfo.editingType}
+- Editing Parameters: ${userInfo.editingParameters}
 `;
 
     zip.file('README.txt', readmeContent);
@@ -2025,10 +2046,8 @@ document.addEventListener('DOMContentLoaded', function() {
   const questionList = document.getElementById('question-list');
   const selectedQuestionDisplay = document.getElementById('selected-question-display');
   const selectedQuestionText = document.getElementById('selected-question-text');
-  const genderSelect = document.getElementById('gender');
-  const genderCustomGroup = document.getElementById('gender-custom-group');
-  const raceSelect = document.getElementById('race');
-  const raceCustomGroup = document.getElementById('race-custom-group');
+  const editingTypeSelect = document.getElementById('editing-type');
+  const editingParametersSelect = document.getElementById('editing-parameters');
 
   let selectedQuestion = null;
 
@@ -2117,19 +2136,39 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
 
-  function handleGenderChange() {
-    if (genderSelect.value === 'other') {
-      genderCustomGroup.classList.add('active');
-    } else {
-      genderCustomGroup.classList.remove('active');
-    }
-  }
+  function updateEditingParameters() {
+    const selectedType = editingTypeSelect.value;
+    editingParametersSelect.innerHTML = '';
+    editingParametersSelect.disabled = !selectedType;
 
-  function handleRaceChange() {
-    if (raceSelect.value === 'other') {
-      raceCustomGroup.classList.add('active');
-    } else {
-      raceCustomGroup.classList.remove('active');
+    if (!selectedType) {
+      editingParametersSelect.innerHTML = '<option value="">Please select editing type first</option>';
+      return;
+    }
+
+    if (selectedType === 'none') {
+      editingParametersSelect.innerHTML = '<option value="no-parameters">No parameters needed</option>';
+    } else if (selectedType === 'emphasis' || selectedType === 'speed' || selectedType === 'intonation' || selectedType === 'tone') {
+      editingParametersSelect.innerHTML = `
+        <option value="">Please select</option>
+        <option value="decrease-strong">-- (Strong decrease)</option>
+        <option value="decrease-light">- (Light decrease)</option>
+        <option value="increase-light">+ (Light increase)</option>
+        <option value="increase-strong">++ (Strong increase)</option>
+      `;
+    } else if (selectedType === 'background-noise') {
+      editingParametersSelect.innerHTML = `
+        <option value="">Please select</option>
+        <option value="crowd">Crowd</option>
+        <option value="machine">Machine</option>
+        <option value="white-noise">White Noise</option>
+      `;
+    } else if (selectedType === 'emotion') {
+      editingParametersSelect.innerHTML = `
+        <option value="">Please select</option>
+        <option value="laugh">Laugh</option>
+        <option value="scream">Scream</option>
+      `;
     }
   }
 
@@ -2354,14 +2393,14 @@ document.addEventListener('DOMContentLoaded', function() {
     const userInfo = {
       address: document.getElementById('address').value,
       gender: document.getElementById('gender').value,
-      genderCustom: document.getElementById('gender-custom').value,
       race: document.getElementById('race').value,
-      raceCustom: document.getElementById('race-custom').value
+      editingType: document.getElementById('editing-type').value,
+      editingParameters: document.getElementById('editing-parameters').value
     };
 
 
-    if (!userInfo.address || !userInfo.gender || !userInfo.race) {
-      alert('Please fill in all required fields (Address, Gender, Race) before submitting!');
+    if (!userInfo.address || !userInfo.gender || !userInfo.race || !userInfo.editingType || !userInfo.editingParameters) {
+      alert('Please fill in all required fields (Address, Gender, Race, Editing Type, Parameters) before submitting!');
       return;
     }
 
@@ -2406,8 +2445,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   questionTypeSelect.addEventListener('change', updateCategories);
   questionCategorySelect.addEventListener('change', updateQuestions);
-  genderSelect.addEventListener('change', handleGenderChange);
-  raceSelect.addEventListener('change', handleRaceChange);
+  editingTypeSelect.addEventListener('change', updateEditingParameters);
 
 
   const form = document.getElementById('voice-collection-form');
@@ -2448,7 +2486,7 @@ document.addEventListener('DOMContentLoaded', function() {
         <td>${submission.id}</td>
         <td>${new Date(submission.timestamp).toLocaleString()}</td>
         <td>Q${submission.questionInfo.id}: ${submission.questionInfo.question.substring(0, 50)}...</td>
-        <td>${submission.userInfo.address}, ${submission.userInfo.gender}, ${submission.userInfo.race}</td>
+        <td>${submission.userInfo.address}, ${submission.userInfo.gender}, ${submission.userInfo.race}, ${submission.userInfo.editingType || 'N/A'}, ${submission.userInfo.editingParameters || 'N/A'}</td>
         <td>
           <span class="tag ${storageType === 'Download' ? 'is-success' : 'is-warning'}">${storageType}</span>
           <button class="button is-small is-info" onclick="playSubmissionAudio(${index})">
@@ -2521,6 +2559,9 @@ document.addEventListener('DOMContentLoaded', function() {
       document.getElementById('load-submissions-btn').click();
     }
   };
+
+  // Initialize editing parameters on page load
+  updateEditingParameters();
 });
 </script>
 
