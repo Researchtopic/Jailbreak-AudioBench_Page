@@ -503,36 +503,6 @@
             </a>
           </span>
 
-          </span>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-          <span class="link-block">
-            <a href="https://huggingface.co/datasets/researchtopic/Jailbreak-AudioBench" target="_blank"
-               class="external-link button is-normal is-rounded is-dark">
-              <span class="icon"><img src="static/images/huggingface.jpg" style="width:16px;height:16px;"></span>
-              <span>Download Dataset</span>
-            </a>
-          </span>
-
-          <span class="link-block">
-            <a href="https://huggingface.co/datasets/researchtopic/Jailbreak-AudioBench-Plus" target="_blank"
-               class="external-link button is-normal is-rounded is-dark">
-              <span class="icon"><img src="static/images/huggingface.jpg" style="width:16px;height:16px;"></span>
-              <span>Download Plus Dataset</span>
-            </a>
-          </span>
-
-          <span class="link-block">
-            <a href="https://github.com/Researchtopic/Code-Jailbreak-AudioBench" target="_blank"
-               class="external-link button is-normal is-rounded is-dark">
-              <span class="icon"><i class="fab fa-github"></i></span><span>Download Code</span>
-            </a>
-          </span>
-
           <span class="link-block">
             <a href="#volunteer-voice-collection"
                class="external-link button is-normal is-rounded is-dark">
@@ -2533,7 +2503,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
 
-  // 播放提交的音频（现在只显示信息，因为音频已下载）
+
   window.playSubmissionAudio = function(index) {
     const submissions = JSON.parse(localStorage.getItem('audioSubmissions') || '[]');
     if (submissions[index]) {
@@ -2542,13 +2512,13 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   };
 
-  // 删除提交
+
   window.deleteSubmission = function(index) {
     if (confirm('Are you sure you want to delete this submission?')) {
       const submissions = JSON.parse(localStorage.getItem('audioSubmissions') || '[]');
       submissions.splice(index, 1);
       localStorage.setItem('audioSubmissions', JSON.stringify(submissions));
-      document.getElementById('load-submissions-btn').click(); // 重新加载列表
+      document.getElementById('load-submissions-btn').click();
     }
   };
 });
